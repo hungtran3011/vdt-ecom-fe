@@ -1,0 +1,51 @@
+@import '@material/ripple/dist/mdc.ripple.css';
+
+.mdc-ripple-surface {
+  position: relative;
+  outline: none;
+  overflow: hidden;
+}
+
+.mdc-ripple-surface::before,
+.mdc-ripple-surface::after {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.mdc-ripple-surface::before {
+  transition: opacity 15ms linear, background-color 15ms linear;
+  z-index: 1;
+  /* The ::before element is used for the hover state */
+}
+
+.mdc-ripple-surface::after {
+  z-index: 0;
+  /* The ::after element is used for the ripple */
+  transition: opacity 150ms linear;
+}
+
+.mdc-ripple-surface:hover::before {
+  opacity: 0.04;
+}
+
+.mdc-ripple-surface:not(.mdc-ripple-upgraded):focus::before,
+.mdc-ripple-surface.mdc-ripple-upgraded--background-focused::before {
+  transition-duration: 75ms;
+  opacity: 0.12;
+}
+
+.mdc-ripple-surface:not(.mdc-ripple-upgraded)::after {
+  transition: opacity 150ms linear;
+}
+
+.mdc-ripple-surface:not(.mdc-ripple-upgraded):active::after {
+  transition-duration: 75ms;
+  opacity: 0.12;
+}
+
+.mdc-ripple-surface.mdc-ripple-upgraded {
+  --mdc-ripple-fg-opacity: 0.12;
+}
