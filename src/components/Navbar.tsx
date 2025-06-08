@@ -1,21 +1,28 @@
-"use client"
+"use client";
 
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Button from "./Button";
-import { useState } from "react";
+import IconButton from "./IconButton";
 import SearchBox from "./SearchBox";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from 'next/navigation';
 import { isAdmin } from "@/utils/roleCheck";
+import { debugSession } from "@/utils/debugAuth";
+import { useCart } from "@/hooks/useCart";
 
 export default function Navbar() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { data: session, status } = useSession();
     const router = useRouter();
+    const { data: cart } = useCart();
 
-    console.log('Session:', session);
+    // Debug session when it changes
+    React.useEffect(() => {
+        debugSession(session, 'Navbar useEffect');
+    }, [session, status]);
 
     const handleSignOut = async () => {
         try {
@@ -48,208 +55,242 @@ export default function Navbar() {
     const renderAuthSection = () => {
         if (status === "loading") {
             return (
-                <div className="w-20 h-8 bg-gray-200 animate-pulse rounded hidden sm:flex"></div>
+                <div className="w-20 h-8 bg-(--md-sys-color-surface-variant) animate-pulse rounded-full"></div>
             );
         }
 
         if (session) {
             return (
-                <div className="hidden sm:flex items-center gap-2">
-                    <span className="text-sm text-(--md-sys-color-on-surface) max-w-32 truncate">
-                        Xin chào, {session.user?.name || session.user?.email}
-                    </span>
-                    <Button 
-                        variant="outlined" 
-                        label="Đăng xuất"
-                        onClick={handleSignOut}
-                        className="text-xs"
-                    />
-                </div>
+                <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                        <button 
+                            className="flex items-center gap-2 px-3 py-2 bg-(--md-sys-color-surface-container-highest) hover:bg-(--md-sys-color-surface-container-high) rounded-full transition-colors group"
+                            title="Tài khoản"
+                        >
+                            <div className="w-8 h-8 rounded-full bg-(--md-sys-color-primary-container) flex items-center justify-center">
+                                <span className="mdi text-sm text-(--md-sys-color-on-primary-container)">
+                                    person
+                                </span>
+                            </div>
+                            {/* <span className="text-sm font-medium text-(--md-sys-color-on-surface) max-w-32 truncate">
+                                {session.user?.given_name || session.user?.name || session.user?.email}
+                            </span>*/}
+                            <span className="mdi text-sm text-(--md-sys-color-on-surface-variant) group-hover:text-(--md-sys-color-on-surface) transition-colors ml-1">
+                                expand_more
+                            </span>
+                        </button>
+                    </DropdownMenu.Trigger>
+
+                    <DropdownMenu.Portal>
+                        <DropdownMenu.Content 
+                            className="min-w-56 bg-(--md-sys-color-surface-container) rounded-xl border border-(--md-sys-color-outline-variant) shadow-lg p-2 z-50"
+                            sideOffset={8}
+                            align="end"
+                        >
+                            {/* User Info Header */}
+                            <div className="px-3 py-2 border-b border-(--md-sys-color-outline-variant) mb-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-(--md-sys-color-primary-container) flex items-center justify-center">
+                                        <span className="mdi text-lg text-(--md-sys-color-on-primary-container)">
+                                            person
+                                        </span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-(--md-sys-color-on-surface) truncate">
+                                            {session.user?.given_name || session.user?.name || 'User'}
+                                        </p>
+                                        <p className="text-xs text-(--md-sys-color-on-surface-variant) truncate">
+                                            {session.user?.email}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Menu Items */}
+                            <DropdownMenu.Item asChild>
+                                <Link 
+                                    href="/orders"
+                                    className="flex items-center gap-3 px-3 py-2 text-sm text-(--md-sys-color-on-surface) hover:bg-(--md-state-layers-on-surface-opacity-008) rounded-lg transition-colors cursor-pointer"
+                                >
+                                    <span className="mdi text-lg text-(--md-sys-color-on-surface-variant)">
+                                        notifications
+                                    </span>
+                                    Thông báo
+                                </Link>
+                            </DropdownMenu.Item>
+
+                            <DropdownMenu.Item asChild>
+                                <Link 
+                                    href="/orders"
+                                    className="flex items-center gap-3 px-3 py-2 text-sm text-(--md-sys-color-on-surface) hover:bg-(--md-state-layers-on-surface-opacity-008) rounded-lg transition-colors cursor-pointer"
+                                >
+                                    <span className="mdi text-lg text-(--md-sys-color-on-surface-variant)">
+                                        shopping_bag
+                                    </span>
+                                    Đơn hàng của tôi
+                                </Link>
+                            </DropdownMenu.Item>
+
+                            <DropdownMenu.Item asChild>
+                                <Link 
+                                    href="/cart"
+                                    className="flex items-center gap-3 px-3 py-2 text-sm text-(--md-sys-color-on-surface) hover:bg-(--md-state-layers-on-surface-opacity-008) rounded-lg transition-colors cursor-pointer"
+                                >
+                                    <div className="relative">
+                                        <span className="mdi text-lg text-(--md-sys-color-on-surface-variant)">
+                                            shopping_cart
+                                        </span>
+                                        {cart && cart.totalItems > 0 && (
+                                            <span className="absolute -top-1 -right-1 min-w-4 h-4 bg-(--md-sys-color-error) text-(--md-sys-color-on-error) text-xs font-medium rounded-full flex items-center justify-center px-1">
+                                                {cart.totalItems}
+                                            </span>
+                                        )}
+                                    </div>
+                                    Giỏ hàng{cart && cart.totalItems > 0 && ` (${cart.totalItems})`}
+                                </Link>
+                            </DropdownMenu.Item>
+
+                            <DropdownMenu.Item asChild>
+                                <Link 
+                                    href="/profile"
+                                    className="flex items-center gap-3 px-3 py-2 text-sm text-(--md-sys-color-on-surface) hover:bg-(--md-state-layers-on-surface-opacity-008) rounded-lg transition-colors cursor-pointer"
+                                >
+                                    <span className="mdi text-lg text-(--md-sys-color-on-surface-variant)">
+                                        settings
+                                    </span>
+                                    Cài đặt tài khoản
+                                </Link>
+                            </DropdownMenu.Item>
+
+                            {/* Admin Link (if admin) */}
+                            {session && isAdmin(session) && (
+                                <DropdownMenu.Item asChild>
+                                    <Link 
+                                        href="/admin"
+                                        className="flex items-center gap-3 px-3 py-2 text-sm text-(--md-sys-color-primary) hover:bg-(--md-state-layers-primary-opacity-008) rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        <span className="mdi text-lg text-(--md-sys-color-primary)">
+                                            admin_panel_settings
+                                        </span>
+                                        Quản trị
+                                    </Link>
+                                </DropdownMenu.Item>
+                            )}
+
+                            <DropdownMenu.Separator className="h-px bg-(--md-sys-color-outline-variant) my-2" />
+
+                            {/* Sign Out */}
+                            <DropdownMenu.Item asChild>
+                                <button 
+                                    onClick={handleSignOut}
+                                    className="flex items-center gap-3 px-3 py-2 text-sm text-(--md-sys-color-error) hover:bg-(--md-state-layers-error-opacity-008) rounded-lg transition-colors cursor-pointer w-full text-left"
+                                >
+                                    <span className="mdi text-lg text-(--md-sys-color-error)">
+                                        logout
+                                    </span>
+                                    Đăng xuất
+                                </button>
+                            </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                </DropdownMenu.Root>
             );
         }
 
         return (
             <Button 
                 variant="filled" 
-                className="bg-yellow-800 hidden sm:flex"
+                label="Đăng nhập"
                 onClick={() => router.push('/login')}
-                label="Đăng nhập / Đăng ký"
-            >
-            </Button>
+                hasIcon
+                icon="login"
+            />
         );
-    };
-
-    const renderMobileAuthSection = () => {
-        if (status === "loading") {
-            return (
-                <div className="w-full h-10 bg-gray-200 animate-pulse rounded mt-4"></div>
-            );
-        }
-
-        if (session) {
-            return (
-                <div className="mt-4 p-3 bg-(--md-sys-color-surface-container) rounded">
-                    <div className="text-sm text-(--md-sys-color-on-surface) mb-2">
-                        Xin chào, {session.user?.name || session.user?.email}
-                    </div>
-                    <Button 
-                        variant="outlined" 
-                        label="Đăng xuất"
-                        onClick={() => {
-                            setIsMenuOpen(false);
-                            handleSignOut();
-                        }}
-                        className="w-full"
-                    />
-                </div>
-            );
-        }
-
-        return (
-            <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                <Button 
-                    variant="filled" 
-                    label="Đăng nhập / Đăng ký"
-                    className="bg-yellow-800 mt-4 w-full"
-                />
-            </Link>
-        );
-    };
-
-    const renderAdminLink = () => {
-        if (session && isAdmin(session)) {
-            return (
-                <Link 
-                    href="/admin" 
-                    className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-                >
-                    Admin
-                </Link>
-            );
-        }
-        return null;
     };
 
     return (
-        <div className="self-stretch h-16 px-2 inline-flex justify-between items-center overflow-hidden gap-2 relative flex-1 w-full">
-            <div className="flex justify-center items-center gap-2">
-                <Image alt="logo" className="w-9 h-9" src="https://placehold.co/36x36" width={36} height={36} />
-                
-                {/* Hamburger menu button - visible only on small screens */}
-                <button 
-                    className="md:hidden p-2"
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    aria-label="Toggle menu"
-                >
-                    {isMenuOpen ? (
-                        <span className="mdi w-6 h-6 text-(--md-sys-on-background)">close</span>
-                    ) : (
-                        <span className="mdi w-6 h-6 text-(--md-sys-on-background)">menu</span>
-                    )}
-                </button>
-                
-                {/* Desktop navigation - hidden on small screens */}
-                <NavigationMenu.Root className="hidden md:flex h-10 p-1 rounded-md justify-start items-start overflow-hidden">
-                    <NavigationMenu.List className="self-stretch flex justify-center items-center">
-                        <NavigationMenu.Item>
-                            <NavigationMenu.Link asChild>
-                                <Link href="/" className="self-stretch px-3 py-2 bg-white/0 rounded flex justify-center items-center gap-1">
-                                    <span className="justify-center text-(--md-sys-on-background) text-xs leading-normal">
-                                        Trang chủ
-                                    </span>
-                                </Link>
-                            </NavigationMenu.Link>
-                        </NavigationMenu.Item>
-                        
-                        <NavigationMenu.Item>
-                            <NavigationMenu.Link asChild>
-                                <Link href="/products" className="self-stretch px-3 py-2 bg-white/0 rounded flex justify-center items-center gap-[5px]">
-                                    <span className="justify-center text-(--md-sys-color-on-background) text-xs font-medium leading-normal">
-                                        Sản phẩm
-                                    </span>
-                                </Link>
-                            </NavigationMenu.Link>
-                        </NavigationMenu.Item>
-                        
-                        <NavigationMenu.Item>
-                            <NavigationMenu.Link asChild>
-                                <Link href="/about" className="self-stretch px-3 py-2 bg-white/0 rounded flex justify-center items-center gap-[5px]">
-                                    <span className="justify-center text-(--md-sys-color-on-background) text-xs font-medium leading-normal">
-                                        Về chúng tôi
-                                    </span>
-                                </Link>
-                            </NavigationMenu.Link>
-                        </NavigationMenu.Item>
-                        
-                        <NavigationMenu.Item>
-                            <NavigationMenu.Link asChild>
-                                <Link href="/support" className="self-stretch px-3 py-2 bg-white/0 rounded flex justify-center items-center gap-[5px]">
-                                    <span className="justify-center text-(--md-sys-color-on-background) text-xs font-medium leading-normal">
-                                        Hỗ trợ
-                                    </span>
-                                </Link>
-                            </NavigationMenu.Link>
-                        </NavigationMenu.Item>
-                        {renderAdminLink()}
-                    </NavigationMenu.List>
-                    
-                    <NavigationMenu.Viewport />
-                </NavigationMenu.Root>
-            </div>
-            
-            <SearchBox className="flex-1"/>
-
-            {/* Desktop auth section */}
-            {renderAuthSection()}
-            
-            {/* Mobile menu overlay - visible when menu is open */}
-            {isMenuOpen && (
-                <div className="absolute top-16 left-0 right-0 bg-(--md-sys-color-surface) z-50 shadow-lg md:hidden">
-                    <div className="flex flex-col p-4">
-                        <Link 
-                            href="/" 
-                            className="px-4 py-3 text-(--md-sys-on-background) hover:bg-(--md-sys-color-surface-container)"
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            Trang chủ
-                        </Link>
-                        <Link 
-                            href="/products" 
-                            className="px-4 py-3 text-(--md-sys-on-background) hover:bg-(--md-sys-color-surface-container)"
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            Sản phẩm
-                        </Link>
-                        <Link 
-                            href="/about" 
-                            className="px-4 py-3 text-(--md-sys-on-background) hover:bg-(--md-sys-color-surface-container)"
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            Về chúng tôi
-                        </Link>
-                        <Link 
-                            href="/support" 
-                            className="px-4 py-3 text-(--md-sys-on-background) hover:bg-(--md-sys-color-surface-container)"
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            Hỗ trợ
-                        </Link>
-                        
-                        {/* Mobile search - visible only in mobile menu */}
-                        <div className="mt-4 p-1 bg-(--md-sys-color-surface-container-lowest) rounded-md outline-1 outline-offset-[-1px] outline-(--md-sys-color-outline) flex justify-between items-center overflow-hidden">
-                            <input 
-                                type="text" 
-                                placeholder="Tìm kiếm sản phẩm..."
-                                className="w-full h-6 px-2.5 bg-transparent border-none outline-none text-(--md-sys-color-on-surface) text-xs font-normal leading-tight"
+        /* Hide entire navbar on mobile, show only on desktop */
+        <header className="hidden md:block bg-(--md-sys-color-surface) border-b border-(--md-sys-color-outline-variant) sticky top-0 z-50">
+            <div className="container mx-auto lg:px-4">
+                <div className="flex items-center justify-between h-16">
+                    {/* Left section: Logo and Navigation */}
+                    <div className="flex items-center gap-6">
+                        {/* Logo */}
+                        <Link href="/" className="flex items-center gap-2">
+                            <Image 
+                                alt="VDT Store Logo" 
+                                className="w-10 h-10" 
+                                src="/logo.jpg" 
+                                width={40} 
+                                height={40} 
                             />
-                            <span className="mdi w-5 h-5 text-(--md-sys-color-on-surface) mr-2">search</span>
-                        </div>
+                        </Link>
                         
-                        {/* Mobile auth section */}
-                        {renderMobileAuthSection()}
+                        {/* Desktop Navigation */}
+                        <NavigationMenu.Root className="flex">
+                            <NavigationMenu.List className="flex items-center gap-1">
+                                <NavigationMenu.Item>
+                                    <NavigationMenu.Link asChild>
+                                        <Link 
+                                            href="/" 
+                                            className="px-4 py-2 rounded-full text-sm font-medium text-(--md-sys-color-on-surface) hover:bg-(--md-state-layers-on-surface-opacity-008) transition-colors"
+                                        >
+                                            Trang chủ
+                                        </Link>
+                                    </NavigationMenu.Link>
+                                </NavigationMenu.Item>
+                                
+                                <NavigationMenu.Item>
+                                    <NavigationMenu.Link asChild>
+                                        <Link 
+                                            href="/products" 
+                                            className="px-4 py-2 rounded-full text-sm font-medium text-(--md-sys-color-on-surface) hover:bg-(--md-state-layers-on-surface-opacity-008) transition-colors"
+                                        >
+                                            Sản phẩm
+                                        </Link>
+                                    </NavigationMenu.Link>
+                                </NavigationMenu.Item>
+                            </NavigationMenu.List>
+                            <NavigationMenu.Viewport />
+                        </NavigationMenu.Root>
+                    </div>
+                    
+                    {/* Center section: Search */}
+                    <div className="flex-1 max-w-md mx-6">
+                        <SearchBox className="w-full" />
+                    </div>
+
+                    {/* Right section: User actions */}
+                    <div className="flex items-center gap-2">
+                        {/* Notification icon */}
+                        <IconButton
+                            icon="notifications"
+                            className="hidden lg:flex"
+                            variant="standard"
+                            size="medium"
+                            aria-label="Thông báo"
+                            title="Thông báo"
+                            badge={false}
+                        />
+                        
+                        {/* Cart icon */}
+                        <IconButton
+                            icon="shopping_cart"
+                            className="hidden lg:flex"
+                            variant="standard"
+                            size="medium"
+                            aria-label="Giỏ hàng"
+                            title="Giỏ hàng"
+                            badge={cart ? cart.totalItems > 0 : false}
+                            badgeContent={cart?.totalItems?.toString()}
+                            onClick={() => router.push('/cart')}
+                        />
+                        
+                        {/* User account */}
+                        {renderAuthSection()}
                     </div>
                 </div>
-            )}
-        </div>
+            </div>
+        </header>
     );
 }

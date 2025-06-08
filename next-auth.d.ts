@@ -51,6 +51,13 @@ declare module "next-auth/jwt" {
     refreshToken?: string;
     idToken?: string; // Add ID token
     expiresAt?: number;
+    roles?: string[]; // Add roles directly to JWT
+    preferred_username?: string;
+    given_name?: string;
+    family_name?: string;
+    sub?: string;
+    email?: string;
+    name?: string;
     user?: {
       id: string;
       email: string;

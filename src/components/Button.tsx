@@ -167,7 +167,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             outlined: {
                 enabled: "text-(--md-sys-color-primary)",
                 hovered: "text-(--md-sys-color-primary)",
-                pressed: "text-yellow-800",
+                pressed: "text-(--md-sys-color-primary)",
                 disabled: "opacity-40 text-(--md-sys-color-on-surface)",
                 focused: "text-(--md-sys-color-primary)",
             },

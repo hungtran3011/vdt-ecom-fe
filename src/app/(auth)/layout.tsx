@@ -6,7 +6,7 @@ export default function AuthLayout({
     children: React.ReactNode;
     }) {
     return (
-        <html lang="en" className="h-full">
+        <html lang="vi" className="h-full">
             <body>
                 {children}
             </body>

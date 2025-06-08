@@ -104,7 +104,7 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     const hasLeadingIcon = !!leadingIcon;
     const hasTrailingIcon = !!trailingIcon;
     const showSupportingText = !!(supportingText || error);
-    const isFloating = focused || hasValue || placeholder;
+    const isFloating = focused || hasValue || placeholder || props.type === "date";
     const hasPlaceholder = !!placeholder;
     const shouldShowCutout = isFloating || hasPlaceholder; // Show cutout when floating OR has placeholder
 

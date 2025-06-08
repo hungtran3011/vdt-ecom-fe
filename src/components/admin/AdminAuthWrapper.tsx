@@ -1,9 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { isAdmin } from '@/utils/roleCheck';
 
 interface AdminAuthWrapperProps {
   children: React.ReactNode;
@@ -11,39 +9,28 @@ interface AdminAuthWrapperProps {
 
 export default function AdminAuthWrapper({ children }: AdminAuthWrapperProps) {
   const { data: session, status } = useSession();
-  const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return;
+    console.log('AdminAuthWrapper - Session status:', {
+      status,
+      sessionExists: !!session,
+      userEmail: session?.user?.email,
+      userRoles: session?.user?.roles,
+    });
+  }, [session, status]);
 
-    console.log('AdminAuthWrapper - Session:', session);
-    console.log('AdminAuthWrapper - User roles:', session?.user?.roles);
-    console.log('AdminAuthWrapper - isAdmin result:', isAdmin(session));
-
-    if (!session) {
-      console.log('No session found, redirecting to login');
-      router.push('/login');
-      return;
-    }
-
-    if (!isAdmin(session)) {
-      console.log('User is not admin, redirecting to home');
-      router.push('/');
-      return;
-    }
-  }, [session, status, router]);
-
+  // If middleware let us get here, we're authenticated and authorized
+  // Just wait for session to load to avoid hydration issues
   if (status === 'loading') {
+    console.log('AdminAuthWrapper - Loading session...');
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      <div className="flex justify-center items-center h-screen bg-(--md-sys-color-surface)">
+        <div className="animate-spin rounded-full h-32 w-32 border-4 border-(--md-sys-color-outline-variant) border-t-(--md-sys-color-primary)"></div>
       </div>
     );
   }
 
-  if (!session || !isAdmin(session)) {
-    return null;
-  }
-
+  // Trust middleware's authentication - if we got here, we're authorized
+  console.log('AdminAuthWrapper - Rendering admin content (middleware verified)');
   return <>{children}</>;
 }

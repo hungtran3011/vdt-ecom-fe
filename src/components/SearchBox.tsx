@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/utils/cn';
+import { t } from '@/utils/localization';
 
 interface SearchBoxProps {
   placeholder?: string;
@@ -11,7 +12,7 @@ interface SearchBoxProps {
 }
 
 export default function SearchBox({
-  placeholder = "Hinted search text",
+  placeholder = t('search.hintedSearchText'),
   showAvatar = false,
   avatarInitial = "A",
   onSearch,
