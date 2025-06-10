@@ -59,10 +59,12 @@ export default withAuth(
       return NextResponse.next();
     }
     
-    // Block admin users from accessing main pages and login (since they're already authenticated)
+    // Block admin users from accessing main pages and login, but avoid redirect loops
+    // Instead of redirecting here, we'll handle this on the client side
     if (isAdmin && (pathname === '/' || pathname.startsWith('/categories') || pathname.startsWith('/search') || pathname === '/login' || pathname === '/register')) {
-      console.log('🚫 Main page: Admin user blocked from main/user pages and auth pages');
-      return NextResponse.redirect(new URL('/admin', req.url));
+      console.log('⚠️ Admin user accessing user pages - allowing for now (client-side redirect preferred)');
+      // Let the request through - we'll handle the redirect on the client side to avoid loops
+      return NextResponse.next();
     }
     
     // For all other routes, just continue

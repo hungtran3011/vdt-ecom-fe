@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { getSession } from 'next-auth/react';
 import { ApiError } from '@/types/api';
+import TokenRefreshManager from '@/utils/tokenRefreshManager';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8888/api',
@@ -14,6 +15,26 @@ const api = axios.create({
 // Enhanced token getter - gets the raw Keycloak access token
 async function getKeycloakAccessToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
+  
+  // Check if token refresh is blocked by circuit breaker
+  const refreshManager = TokenRefreshManager.getInstance();
+  if (!refreshManager.canAttemptRefresh()) {
+    console.warn('⚠️ Token refresh blocked by circuit breaker - using existing session if available');
+    
+    // Try to get existing session without triggering refresh
+    try {
+      const session = await getSession();
+      if (session?.accessToken) {
+        return session.accessToken;
+      }
+    } catch (error) {
+      console.warn('⚠️ Cannot get existing session:', error);
+    }
+    
+    // Circuit breaker is active, return null to allow requests without token
+    // This allows the app to continue functioning in a degraded state
+    return null;
+  }
   
   try {
     // Try multiple methods to get the session token
@@ -42,7 +63,7 @@ async function getKeycloakAccessToken(): Promise<string | null> {
     }
     
     if (!token) {
-      console.error('❌ No access token available from any method');
+      console.warn('⚠️ No access token available - continuing in degraded mode');
     }
     
     return token;
@@ -61,23 +82,48 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Response interceptor - handle 401 errors
+// Response interceptor - handle 401 errors with circuit breaker integration
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiError>) => {
+    const refreshManager = TokenRefreshManager.getInstance();
+    
     if (error.response?.status === 401) {
-      console.log('❌ 401 Unauthorized - redirecting to login');
+      console.log('❌ 401 Unauthorized detected');
       
-      // Re-enabled redirect functionality
+      // If circuit breaker is active, don't attempt redirect immediately
+      // This prevents infinite redirect loops during token refresh failures
+      if (!refreshManager.canAttemptRefresh()) {
+        console.log('⚠️ Circuit breaker active - not redirecting immediately');
+        
+        // Return a more specific error for blocked state
+        const errorResponse: ApiError = {
+          code: 'AUTH_CIRCUIT_BREAKER_ACTIVE',
+          message: 'Authentication temporarily unavailable. Please try again later.',
+          timestamp: new Date().toISOString(),
+          details: 'Circuit breaker is active due to repeated authentication failures',
+          path: error.config?.url || 'unknown'
+        };
+        
+        return Promise.reject(errorResponse);
+      }
+      
+      // Record the authentication failure
+      refreshManager.recordRefreshAttempt(false, `401 error from ${error.config?.url}`);
+      
+      // Only redirect if we haven't hit the circuit breaker threshold
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
         
-        // Redirect based on current route
-        if (currentPath.startsWith('/admin')) {
-          window.location.href = '/api/auth/signin';
-        } else {
-          window.location.href = '/login';
-        }
+        // Add a small delay to prevent rapid redirects
+        setTimeout(() => {
+          // Redirect based on current route
+          if (currentPath.startsWith('/admin')) {
+            window.location.href = '/api/auth/signin';
+          } else {
+            window.location.href = '/login';
+          }
+        }, 1000);
       }
     }
     

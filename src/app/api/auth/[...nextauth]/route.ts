@@ -5,15 +5,40 @@ import { KeycloakJWTPayload } from "@/types/KeycloakJWTPayload";
 import { refreshAccessToken } from "@/utils/tokenRefresh";
 import { debugTokenPayload, validateIssuerClaim } from "@/utils/tokenDebug";
 import { parseJWTPayload } from "@/utils/jwtParser";
+import TokenRefreshManager from "@/utils/tokenRefreshManager";
 
 /**
+ * Enhanced token refresh function with circuit breaker pattern
  * Takes a token, and returns a new token with updated
  * `accessToken` and `accessTokenExpires`. If an error occurs,
  * returns the old token and an error property
  */
 async function refreshToken(token: Record<string, unknown>) {
+  const refreshManager = TokenRefreshManager.getInstance();
+
   try {
     console.log('🔄 JWT callback - attempting to refresh token');
+
+    // Check if refresh should be attempted based on recent failure history
+    if (!refreshManager.canAttemptRefresh()) {
+      console.log('🚫 JWT callback - refresh blocked by circuit breaker');
+      
+      // If we should sign out due to persistent failures, return error
+      if (refreshManager.shouldSignOut()) {
+        console.log('❌ JWT callback - forcing sign out due to persistent refresh failures');
+        return {
+          ...token,
+          error: "RefreshAccessTokenError",
+          forceSignOut: true
+        };
+      }
+      
+      // Otherwise, keep existing token and try again later
+      return {
+        ...token,
+        error: "RefreshAccessTokenError"
+      };
+    }
 
     if (!token.refreshToken) {
       throw new Error('No refresh token available');
@@ -66,6 +91,7 @@ async function refreshToken(token: Record<string, unknown>) {
       sub: payload.sub,
       email: payload.email,
       error: undefined, // Clear any previous errors
+      forceSignOut: undefined, // Clear any sign out flags
     };
   } catch (error) {
     console.error('❌ JWT callback - error refreshing token:', error);
@@ -151,7 +177,15 @@ const authOptions: NextAuthOptions = {
           token.sub = payload.sub;
           token.email = payload.email;
 
-          console.log('JWT callback - extracted roles:', roles);
+          console.log('JWT callback - extracted user info:', {
+            roles,
+            preferred_username: payload.preferred_username,
+            sub: payload.sub,
+            email: payload.email,
+            name: payload.name,
+            given_name: payload.given_name,
+            family_name: payload.family_name
+          });
 
         } catch (error) {
           console.error('Error decoding JWT in jwt callback:', error);
@@ -164,35 +198,98 @@ const authOptions: NextAuthOptions = {
       const now = Math.floor(Date.now() / 1000);
       const expiresAt = token.expiresAt as number;
 
-      // If token expires in less than 5 minutes, refresh it
-      if (expiresAt && (expiresAt - now) < 300) {
+      // If token expires in less than 2 minutes, refresh it (increased from 5 minutes to prevent frequent calls)
+      if (expiresAt && (expiresAt - now) < 120) {
         console.log('🔄 JWT callback - token expires soon, refreshing...');
-        return await refreshToken(token);
+        
+        // Add rate limiting to prevent rapid successive refresh attempts
+        const lastRefreshTime = token.lastRefreshTime as number || 0;
+        if (now - lastRefreshTime < 30) { // Don't refresh more than once every 30 seconds
+          console.log('⏸️ JWT callback - refresh rate limited, returning existing token');
+          return token;
+        }
+        
+        const refreshedToken = await refreshToken(token);
+        return {
+          ...refreshedToken,
+          lastRefreshTime: now
+        };
       }
 
-      // If there's an error from a previous refresh attempt, try to refresh again
+      // If there's an error from a previous refresh attempt, handle based on refresh manager state
       if (token.error === "RefreshAccessTokenError") {
-        console.log('🔄 JWT callback - previous refresh failed, retrying...');
-        return await refreshToken(token);
+        const refreshManager = TokenRefreshManager.getInstance();
+        
+        // Check if we should force sign out
+        if (token.forceSignOut || refreshManager.shouldSignOut()) {
+          console.log('❌ JWT callback - forcing sign out due to persistent refresh failures');
+          return {
+            ...token,
+            error: "RefreshAccessTokenError",
+            forceSignOut: true
+          };
+        }
+        
+        // If circuit breaker allows, try to refresh again with exponential backoff
+        if (refreshManager.canAttemptRefresh()) {
+          console.log('🔄 JWT callback - previous refresh failed, retrying with backoff...');
+          
+          // Add a small delay for exponential backoff
+          const delay = refreshManager.getRetryDelay();
+          if (delay > 1000) { // Only delay if it's more than 1 second
+            console.log(`⏱️ JWT callback - waiting ${delay}ms before retry`);
+            await new Promise(resolve => setTimeout(resolve, Math.min(delay, 5000))); // Cap at 5 seconds
+          }
+          
+          return await refreshToken(token);
+        } else {
+          console.log('🚫 JWT callback - refresh blocked by circuit breaker, keeping existing token');
+          return token; // Keep existing token without retry
+        }
       }
 
       return token;
     },
     async session({ session, token }) {
-      console.log('🔍 Session callback - token data:', {
-        hasAccessToken: !!token.accessToken,
-        accessTokenLength: token.accessToken ? (token.accessToken as string).length : 0,
-        accessTokenStart: token.accessToken ? (token.accessToken as string).substring(0, 50) + '...' : 'none',
-        hasRoles: !!token.roles,
-        roles: token.roles,
-        hasError: !!token.error,
-        error: token.error,
-      });
+      // Rate limit session callback logs to prevent spam
+      const now = Date.now();
+      const lastSessionLog = (global as unknown as Record<string, number>)._lastSessionLog || 0;
+      
+      if (now - lastSessionLog < 5000) { // Only log once every 5 seconds
+        // Skip logging but still process
+      } else {
+        console.log('🔍 Session callback - token data:', {
+          hasAccessToken: !!token.accessToken,
+          accessTokenLength: token.accessToken ? String(token.accessToken).length : 0,
+          accessTokenStart: token.accessToken ? String(token.accessToken).substring(0, 50) + '...' : 'none',
+          hasRoles: !!token.roles,
+          roles: token.roles,
+          hasError: !!token.error,
+          error: token.error,
+          forceSignOut: token.forceSignOut
+        });
+        (global as unknown as Record<string, number>)._lastSessionLog = now;
+      }
 
-      // If there's a refresh error, the session is invalid
-      if (token.error === "RefreshAccessTokenError") {
-        console.log('❌ Session callback - refresh token error, session invalid');
+      // If there's a refresh error and we should force sign out, invalidate the session
+      if (token.error === "RefreshAccessTokenError" && token.forceSignOut) {
+        console.log('❌ Session callback - refresh token error with force sign out flag, session invalid');
         return null as unknown as typeof session; // Force sign out
+      }
+
+      // If there's a refresh error but no force sign out, provide a degraded session
+      if (token.error === "RefreshAccessTokenError") {
+        console.log('⚠️ Session callback - refresh token error but not forcing sign out, providing degraded session');
+        // Return a minimal session that won't work for API calls but won't break the UI
+        return {
+          ...session,
+          accessToken: undefined,
+          user: {
+            ...session.user,
+            roles: []
+          },
+          error: "RefreshAccessTokenError"
+        };
       }
 
       // Only include essential data in session to reduce cookie size
@@ -206,7 +303,11 @@ const authOptions: NextAuthOptions = {
       console.log('🔍 Session callback - final session:', {
         hasAccessToken: !!session.accessToken,
         accessTokenLength: session.accessToken?.length,
-        userRoles: session.user.roles
+        userRoles: session.user.roles,
+        userId: session.user.id,
+        userEmail: session.user.email,
+        tokenSub: token.sub,
+        tokenEmail: token.email
       });
 
       return session;
@@ -217,24 +318,39 @@ const authOptions: NextAuthOptions = {
       return true;
     },
     
-    async redirect({ url, baseUrl }) {
-      console.log('Redirect callback - url:', url, 'baseUrl:', baseUrl);
-      
-      // If this is a callback after sign in, redirect to homepage first
-      // The middleware will then handle redirecting admin users to /admin
-      if (url.startsWith(baseUrl + '/api/auth/callback')) {
-        console.log('Post-signin redirect - redirecting to home, middleware will handle admin routing');
-        return baseUrl + '/';
-      }
-      
-      // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      
-      // Allows callback URLs on the same origin
-      if (new URL(url).origin === baseUrl) return url;
-      
-      return baseUrl;
-    },
+    // Commenting out redirect callback to prevent infinite loops
+    // The client-side AdminRedirect component will handle admin routing
+    // async redirect({ url, baseUrl }) {
+    //   // Only log if in development to reduce noise
+    //   if (process.env.NODE_ENV === 'development') {
+    //     console.log('Redirect callback - url:', url, 'baseUrl:', baseUrl);
+    //   }
+    //   
+    //   // If the URL is already the base URL, don't redirect to avoid loops
+    //   if (url === baseUrl || url === baseUrl + '/') {
+    //     return url;
+    //   }
+    //   
+    //   // For relative URLs, make them absolute
+    //   if (url.startsWith("/")) {
+    //     return `${baseUrl}${url}`;
+    //   }
+    //   
+    //   // For URLs on the same origin, allow them
+    //   try {
+    //     const urlObj = new URL(url);
+    //     const baseUrlObj = new URL(baseUrl);
+    //     
+    //     if (urlObj.origin === baseUrlObj.origin) {
+    //       return url;
+    //     }
+    //   } catch {
+    //     // If URL parsing fails, fall back to base URL
+    //   }
+    //   
+    //   // Default: redirect to base URL
+    //   return baseUrl;
+    // },
   },
   pages: {
     signIn: '/login',
@@ -242,6 +358,7 @@ const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours - less frequent session updates
   },
   jwt: {
     maxAge: 60 * 60 * 24 * 30, // 30 days

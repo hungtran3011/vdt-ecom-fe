@@ -53,6 +53,7 @@ export type CreateProductRequest = {
 
 // Type for updating existing products
 export type UpdateProductRequest = {
+    id?: number;
     name?: string;
     description?: string;
     basePrice?: number;

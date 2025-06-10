@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { validateKeycloakConfig } from './envValidator';
 import { validateJWTStructure, debugTokenSafely } from './jwtValidator';
 import { parseJWTPayload, isJWTExpired } from './jwtParser';
+import TokenRefreshManager from './tokenRefreshManager';
 
 interface TokenRefreshResponse {
   access_token: string;
@@ -12,17 +13,27 @@ interface TokenRefreshResponse {
 }
 
 /**
- * Refreshes an access token using the refresh token from Keycloak
+ * Enhanced token refresh function with circuit breaker pattern
  */
 export async function refreshAccessToken(refreshToken: string): Promise<TokenRefreshResponse | null> {
+  const refreshManager = TokenRefreshManager.getInstance();
+
+  // Check if we should attempt refresh based on recent failure history
+  if (!refreshManager.canAttemptRefresh()) {
+    console.log('🚫 Token refresh blocked by circuit breaker or retry limits');
+    return null;
+  }
+
   try {
     console.log('🔄 Attempting to refresh access token...');
 
     // First, validate the refresh token structure
     const refreshValidation = validateJWTStructure(refreshToken);
     if (!refreshValidation.isValid) {
-      console.error('❌ Refresh token is malformed:', refreshValidation.error);
+      const error = `Refresh token is malformed: ${refreshValidation.error}`;
+      console.error('❌', error);
       debugTokenSafely(refreshToken, 'Malformed Refresh Token');
+      refreshManager.recordRefreshAttempt(false, error);
       return null;
     }
 
@@ -47,11 +58,13 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenRef
 
     if (!response.ok) {
       const errorText = await response.text();
+      const error = `HTTP ${response.status}: ${response.statusText} - ${errorText}`;
       console.error('❌ Failed to refresh token:', {
         status: response.status,
         statusText: response.statusText,
         error: errorText
       });
+      refreshManager.recordRefreshAttempt(false, error);
       return null;
     }
 
@@ -60,12 +73,15 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenRef
     // Validate the new access token before returning it
     const accessTokenValidation = validateJWTStructure(tokens.access_token);
     if (!accessTokenValidation.isValid) {
-      console.error('❌ Received malformed access token from refresh:', accessTokenValidation.error);
+      const error = `Received malformed access token from refresh: ${accessTokenValidation.error}`;
+      console.error('❌', error);
       debugTokenSafely(tokens.access_token, 'Malformed New Access Token');
+      refreshManager.recordRefreshAttempt(false, error);
       return null;
     }
     
     console.log('✅ Successfully refreshed access token with valid structure');
+    refreshManager.recordRefreshAttempt(true);
     
     // Debug the new token in development
     if (process.env.NODE_ENV === 'development') {
@@ -74,7 +90,9 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenRef
     
     return tokens;
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('❌ Error refreshing access token:', error);
+    refreshManager.recordRefreshAttempt(false, errorMessage);
     return null;
   }
 }

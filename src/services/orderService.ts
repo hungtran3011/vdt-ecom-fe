@@ -1,8 +1,20 @@
 'use client';
 
 import api from '@/lib/axios';
-import { Order, OrderStatus } from '@/types/Order';
+import { Order, OrderStatus, OrderDto } from '@/types/Order';
 import { ApiError } from '@/types/api';
+
+/**
+ * Transform OrderDto from backend to Order for frontend
+ * Converts ISO date strings to Date objects for proper timezone handling
+ */
+const transformOrderDto = (orderDto: OrderDto): Order => {
+  return {
+    ...orderDto,
+    createdAt: new Date(orderDto.createdAt),
+    updatedAt: new Date(orderDto.updatedAt),
+  } as Order;
+};
 
 /**
  * Service for handling order-related API requests
@@ -33,6 +45,17 @@ export class OrderService {
       const response = await api.get('/v1/orders', {
         params: queryParams
       });
+      
+      // Transform the response data if it contains orders
+      if (response.data && Array.isArray(response.data.content)) {
+        return {
+          ...response.data,
+          content: response.data.content.map(transformOrderDto)
+        };
+      } else if (response.data && Array.isArray(response.data)) {
+        return response.data.map(transformOrderDto);
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -48,7 +71,7 @@ export class OrderService {
   async getOrderById(id: string): Promise<Order> {
     try {
       const response = await api.get(`/v1/orders/${id}`);
-      return response.data;
+      return transformOrderDto(response.data);
     } catch (error) {
       console.error(`Error fetching order with id ${id}:`, error);
       throw error as ApiError;
@@ -63,7 +86,7 @@ export class OrderService {
   async createOrder(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
     try {
       const response = await api.post('/v1/orders', order);
-      return response.data;
+      return transformOrderDto(response.data);
     } catch (error) {
       console.error('Error creating order:', error);
       throw error as ApiError;
@@ -79,7 +102,7 @@ export class OrderService {
   async updateOrderStatus(id: string, status: OrderStatus): Promise<Order> {
     try {
       const response = await api.patch(`/v1/orders/${id}/status`, { status });
-      return response.data;
+      return transformOrderDto(response.data);
     } catch (error) {
       console.error(`Error updating order status with id ${id}:`, error);
       throw error as ApiError;
@@ -101,15 +124,60 @@ export class OrderService {
   }
 
   /**
+   * Cancel an order
+   * @param id The order ID to cancel
+   * @returns Promise with the cancelled order
+   */
+  async cancelOrder(id: string): Promise<Order> {
+    try {
+      const response = await api.patch(`/v1/orders/${id}/cancel`);
+      return transformOrderDto(response.data);
+    } catch (error) {
+      console.error(`Error cancelling order with id ${id}:`, error);
+      throw error as ApiError;
+    }
+  }
+
+  /**
+   * Get order tracking information
+   * @param id The order ID to track
+   * @returns Promise with the order tracking details
+   */
+  async getOrderTracking(id: string): Promise<Order> {
+    try {
+      const response = await api.get(`/v1/orders/${id}/tracking`);
+      return transformOrderDto(response.data);
+    } catch (error) {
+      console.error(`Error getting tracking info for order with id ${id}:`, error);
+      throw error as ApiError;
+    }
+  }
+
+  /**
    * Get current user's orders
    * @returns Promise with user's orders
    */
   async getUserOrders(): Promise<Order[]> {
     try {
       const response = await api.get('/v1/orders/user');
-      return response.data;
+      return response.data.map(transformOrderDto);
     } catch (error) {
       console.error('Error fetching user orders:', error);
+      throw error as ApiError;
+    }
+  }
+
+  /**
+   * Reorder an existing order by creating a new order with the same items
+   * @param id The original order ID to reorder
+   * @returns Promise with the newly created order
+   */
+  async reorderOrder(id: string): Promise<Order> {
+    try {
+      const response = await api.post(`/v1/orders/${id}/reorder`);
+      return transformOrderDto(response.data);
+    } catch (error) {
+      console.error(`Error reordering order with id ${id}:`, error);
       throw error as ApiError;
     }
   }
@@ -141,7 +209,11 @@ export class OrderService {
       if (filters.size !== undefined) params.append('size', filters.size.toString());
 
       const response = await api.get(`/v1/orders/filter?${params.toString()}`);
-      return response.data;
+      
+      return {
+        ...response.data,
+        content: response.data.content.map(transformOrderDto)
+      };
     } catch (error) {
       console.error('Error fetching filtered orders:', error);
       throw error as ApiError;
@@ -159,8 +231,16 @@ export class OrderService {
     recentOrders: number;
   }> {
     try {
-      const response = await api.get('/v1/orders/statistics');
-      return response.data;
+      const response = await api.get('/v1/stats/orders');
+      const data = response.data;
+      
+      // Transform backend data to match frontend expectations
+      return {
+        total: data.totalOrders || 0,
+        totalRevenue: data.totalRevenue || 0,
+        statusCounts: data.ordersByStatus || {},
+        recentOrders: Array.isArray(data.recentOrders) ? data.recentOrders.length : 0
+      };
     } catch (error) {
       console.error('Error fetching order statistics:', error);
       throw error as ApiError;
@@ -174,16 +254,14 @@ export class OrderService {
    */
   async exportOrders(filters?: {
     status?: string;
-    paymentMethod?: string;
-    dateFrom?: string;
-    dateTo?: string;
+    startDate?: string;
+    endDate?: string;
   }): Promise<Blob> {
     try {
       const params = new URLSearchParams();
       if (filters?.status) params.append('status', filters.status);
-      if (filters?.paymentMethod) params.append('paymentMethod', filters.paymentMethod);
-      if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
-      if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+      if (filters?.startDate) params.append('startDate', filters.startDate);
+      if (filters?.endDate) params.append('endDate', filters.endDate);
 
       const response = await api.get(`/v1/orders/export?${params.toString()}`, {
         responseType: 'blob'
@@ -203,7 +281,7 @@ export class OrderService {
   async bulkUpdateOrderStatus(updates: { id: string; status: OrderStatus }[]): Promise<Order[]> {
     try {
       const response = await api.patch('/v1/orders/bulk-status', { updates });
-      return response.data;
+      return response.data.map(transformOrderDto);
     } catch (error) {
       console.error('Error bulk updating order statuses:', error);
       throw error as ApiError;
@@ -237,6 +315,16 @@ export class OrderService {
       };
       
       const response = await api.post('/v1/orders/filter/search', queryParams);
+      
+      // Transform the response data if it contains orders
+      if (response.data && Array.isArray(response.data.content)) {
+        return {
+          ...response.data,
+          content: response.data.content.map(transformOrderDto)
+        };
+      } else if (response.data && Array.isArray(response.data)) {
+        return response.data.map(transformOrderDto);
+      }
       
       return response.data;
     } catch (error) {

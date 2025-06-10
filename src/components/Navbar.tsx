@@ -9,20 +9,17 @@ import Button from "./Button";
 import IconButton from "./IconButton";
 import SearchBox from "./SearchBox";
 import { useSession, signOut } from "next-auth/react";
+// import { useSession } from "@/hooks/useSessionDebug"; // Debug version - temporarily disabled
 import { useRouter } from 'next/navigation';
 import { isAdmin } from "@/utils/roleCheck";
-import { debugSession } from "@/utils/debugAuth";
-import { useCart } from "@/hooks/useCart";
+import { useCartContext } from "@/contexts/CartContext";
+// import { useSessionHealth } from "@/hooks/useSessionHealth"; // Temporarily disabled
 
 export default function Navbar() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const { data: cart } = useCart();
-
-    // Debug session when it changes
-    React.useEffect(() => {
-        debugSession(session, 'Navbar useEffect');
-    }, [session, status]);
+    const { getCartItemCount } = useCartContext();
+    // const sessionHealth = useSessionHealth(); // Temporarily disabled
 
     const handleSignOut = async () => {
         try {
@@ -64,7 +61,7 @@ export default function Navbar() {
                 <DropdownMenu.Root>
                     <DropdownMenu.Trigger asChild>
                         <button 
-                            className="flex items-center gap-2 px-3 py-2 bg-(--md-sys-color-surface-container-highest) hover:bg-(--md-sys-color-surface-container-high) rounded-full transition-colors group"
+                            className="flex items-center gap-2 px-3 py-2 bg-(--md-sys-color-surface-container-highest) hover:bg-(--md-sys-color-surface-container-high) rounded-full transition-colors group relative"
                             title="Tài khoản"
                         >
                             <div className="w-8 h-8 rounded-full bg-(--md-sys-color-primary-container) flex items-center justify-center">
@@ -72,9 +69,23 @@ export default function Navbar() {
                                     person
                                 </span>
                             </div>
-                            {/* <span className="text-sm font-medium text-(--md-sys-color-on-surface) max-w-32 truncate">
-                                {session.user?.given_name || session.user?.name || session.user?.email}
-                            </span>*/}
+                            
+                            {/* Session health indicator - Temporarily disabled */}
+                            {/* {sessionHealth.status === 'warning' && (
+                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-(--md-sys-color-tertiary) rounded-full">
+                                    <span className="mdi text-xs text-(--md-sys-color-on-tertiary)">
+                                        warning
+                                    </span>
+                                </div>
+                            )}
+                            {sessionHealth.status === 'error' && (
+                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-(--md-sys-color-error) rounded-full">
+                                    <span className="mdi text-xs text-(--md-sys-color-on-error)">
+                                        error
+                                    </span>
+                                </div>
+                            )} */}
+                            
                             <span className="mdi text-sm text-(--md-sys-color-on-surface-variant) group-hover:text-(--md-sys-color-on-surface) transition-colors ml-1">
                                 expand_more
                             </span>
@@ -140,13 +151,13 @@ export default function Navbar() {
                                         <span className="mdi text-lg text-(--md-sys-color-on-surface-variant)">
                                             shopping_cart
                                         </span>
-                                        {cart && cart.totalItems > 0 && (
+                                        {getCartItemCount() > 0 && (
                                             <span className="absolute -top-1 -right-1 min-w-4 h-4 bg-(--md-sys-color-error) text-(--md-sys-color-on-error) text-xs font-medium rounded-full flex items-center justify-center px-1">
-                                                {cart.totalItems}
+                                                {getCartItemCount()}
                                             </span>
                                         )}
                                     </div>
-                                    Giỏ hàng{cart && cart.totalItems > 0 && ` (${cart.totalItems})`}
+                                    Giỏ hàng{getCartItemCount() > 0 && ` (${getCartItemCount()})`}
                                 </Link>
                             </DropdownMenu.Item>
 
@@ -281,8 +292,8 @@ export default function Navbar() {
                             size="medium"
                             aria-label="Giỏ hàng"
                             title="Giỏ hàng"
-                            badge={cart ? cart.totalItems > 0 : false}
-                            badgeContent={cart?.totalItems?.toString()}
+                            badge={getCartItemCount() > 0}
+                            badgeContent={getCartItemCount().toString()}
                             onClick={() => router.push('/cart')}
                         />
                         

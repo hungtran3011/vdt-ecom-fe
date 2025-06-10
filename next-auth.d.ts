@@ -5,6 +5,7 @@ declare module "next-auth" {
   interface Session {
     accessToken?: string;
     idToken?: string; // Add ID token
+    error?: string; // Add error field for degraded sessions
     user: {
       id: string;
       email: string;

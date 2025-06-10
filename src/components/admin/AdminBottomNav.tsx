@@ -7,27 +7,28 @@ import { t } from '@/utils/localization';
 const adminNavItems: NavItem[] = [
   {
     href: '/admin',
-    label: t('admin.dashboard'),
-    icon: 'dashboard'
+    label: t('adminNavigation.dashboard'),
+    icon: 'dashboard',
+    absolutePathIndicate: true
   },
   {
     href: '/admin/products',
-    label: t('product.name'),
+    label: t('adminNavigation.products'),
     icon: 'inventory_2'
   },
   {
     href: '/admin/stock',
-    label: t('stock.warehouse'),
+    label: t('adminNavigation.stock'),
     icon: 'warehouse'
   },
   {
     href: '/admin/orders',
-    label: t('order.orders'),
+    label: t('adminNavigation.orders'),
     icon: 'shopping_cart'
   },
   {
     href: '/admin/payments',
-    label: t('payment.method'),
+    label: t('adminNavigation.payments'),
     icon: 'payments'
   }
 ];

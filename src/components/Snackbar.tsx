@@ -59,27 +59,27 @@ export default function Snackbar({
     switch (severity) {
       case 'success':
         return {
-          bg: 'bg-(--md-sys-color-tertiary-container)',
-          text: 'text-(--md-sys-color-on-tertiary-container)',
-          icon: 'text-(--md-sys-color-tertiary)'
+          backgroundColor: 'var(--md-sys-color-tertiary-container)',
+          color: 'var(--md-sys-color-on-tertiary-container)',
+          iconColor: 'var(--md-sys-color-tertiary)'
         };
       case 'warning':
         return {
-          bg: 'bg-(--md-sys-color-secondary-container)',
-          text: 'text-(--md-sys-color-on-secondary-container)',
-          icon: 'text-(--md-sys-color-secondary)'
+          backgroundColor: 'var(--md-sys-color-secondary-container)',
+          color: 'var(--md-sys-color-on-secondary-container)',
+          iconColor: 'var(--md-sys-color-secondary)'
         };
       case 'error':
         return {
-          bg: 'bg-(--md-sys-color-error-container)',
-          text: 'text-(--md-sys-color-on-error-container)',
-          icon: 'text-(--md-sys-color-error)'
+          backgroundColor: 'var(--md-sys-color-error-container)',
+          color: 'var(--md-sys-color-on-error-container)',
+          iconColor: 'var(--md-sys-color-error)'
         };
       default:
         return {
-          bg: 'bg-(--md-sys-color-surface-container-high)',
-          text: 'text-(--md-sys-color-on-surface)',
-          icon: 'text-(--md-sys-color-primary)'
+          backgroundColor: 'var(--md-sys-color-surface-container-high)',
+          color: 'var(--md-sys-color-on-surface)',
+          iconColor: 'var(--md-sys-color-primary)'
         };
     }
   };
@@ -92,7 +92,6 @@ export default function Snackbar({
     <div className="fixed inset-0 z-50 pointer-events-none flex items-end justify-center p-4">
       <div
         className={`
-          ${colors.bg} ${colors.text}
           min-w-[344px] max-w-[672px] w-full sm:w-auto
           rounded-lg shadow-lg
           flex items-center gap-3 p-4
@@ -103,9 +102,13 @@ export default function Snackbar({
             : 'translate-y-2 opacity-0 scale-95'
           }
         `}
+        style={{
+          backgroundColor: colors.backgroundColor,
+          color: colors.color
+        }}
       >
         {/* Icon */}
-        <span className={`mdi ${colors.icon} text-xl flex-shrink-0`}>
+        <span className="mdi text-xl flex-shrink-0" style={{ color: colors.iconColor }}>
           {getSeverityIcon()}
         </span>
 
@@ -120,7 +123,8 @@ export default function Snackbar({
             variant="text"
             label={action.label}
             onClick={action.onClick}
-            className={`${colors.text} hover:bg-black hover:bg-opacity-8 -mr-2`}
+            className="-mr-2"
+            style={{ color: colors.color }}
           />
         )}
 
@@ -131,7 +135,8 @@ export default function Snackbar({
           icon="close"
           hasLabel={false}
           onClick={handleClose}
-          className={`${colors.text} hover:bg-black hover:bg-opacity-8 -mr-2`}
+          className="-mr-2"
+          style={{ color: colors.color }}
         />
       </div>
     </div>

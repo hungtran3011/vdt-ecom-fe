@@ -1,23 +1,36 @@
 import { Product, ProductVariation } from './Product';
+import { PaginatedResponse } from './api';
 
-export interface CartItem {
-  id: string;
-  product: Product;
+export interface CartItemDto {
+  id: number;
+  cartId: number;
+  productId: number;
+  product?: Product;
+  variationId?: number;
   variation?: ProductVariation;
   quantity: number;
-  price: number; // Current price at the time of adding to cart
-  totalPrice: number; // price * quantity
-  addedAt: Date;
+  unitPrice: number;
+  totalPrice: number;
+  addedAt: string;
+  updatedAt?: string;
 }
 
-export interface Cart {
-  id?: string;
-  userId?: string;
-  items: CartItem[];
+export interface CartDto {
+  id: number;
+  userId?: number;
+  sessionId?: string;
+  status: 'ACTIVE' | 'ABANDONED' | 'CONVERTED';
   totalItems: number;
   totalPrice: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  items?: CartItemDto[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// Request DTOs
+export interface CreateCartRequest {
+  userId?: number;
+  sessionId?: string;
 }
 
 export interface AddToCartRequest {
@@ -27,8 +40,23 @@ export interface AddToCartRequest {
 }
 
 export interface UpdateCartItemRequest {
-  cartItemId: string;
   quantity: number;
+}
+
+export interface UpdateCartRequest {
+  status?: 'ACTIVE' | 'ABANDONED' | 'CONVERTED';
+}
+
+// Response types for paginated cart items
+export type CartItemsResponse = PaginatedResponse<CartItemDto>;
+
+// Legacy types for backwards compatibility (can be removed later)
+export interface CartItem extends CartItemDto {
+  price: number; // Alias for unitPrice
+}
+
+export interface Cart extends CartDto {
+  items: CartItem[];
 }
 
 export interface CartSummary {
@@ -36,4 +64,5 @@ export interface CartSummary {
   tax: number;
   shipping: number;
   total: number;
+  itemCount: number;
 }

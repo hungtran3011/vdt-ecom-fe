@@ -11,6 +11,7 @@ import { useProducts } from "@/hooks/useProducts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { t } from "@/utils/localization";
 
 /**
  * Homepage with responsive design and API integration
@@ -121,17 +122,17 @@ export default function Home() {
             </h2>
             <form onSubmit={handleSearch} className="flex gap-2">
               <TextField
-                label="Tìm kiếm sản phẩm"
+                label={t('common.searchProducts')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Nhập tên sản phẩm..."
+                placeholder={t('common.searchProductsPlaceholder')}
                 className="flex-1"
                 leadingIcon="search"
               />
               <Button
                 type="submit"
                 variant="filled"
-                label="Tìm"
+                label={t('common.search')}
                 // className="px-6"
               />
             </form>

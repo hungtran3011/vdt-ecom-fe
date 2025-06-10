@@ -1,9 +1,44 @@
 /**
  * Vietnamese localization constants
  * Contains all Vietnamese text used throughout the application
+ * Organized by feature/module for better maintainability
  */
 
 export const VI_TRANSLATIONS = {
+  // Common translations used across the app
+  common: {
+    loading: 'Đang tải...',
+    error: 'Đã xảy ra lỗi',
+    success: 'Thành công',
+    warning: 'Cảnh báo',
+    info: 'Thông tin',
+    noData: 'Không có dữ liệu',
+    notFound: 'Không tìm thấy',
+    unauthorized: 'Không có quyền truy cập',
+    forbidden: 'Truy cập bị từ chối',
+    serverError: 'Lỗi máy chủ',
+    refresh: 'Làm mới',
+    unknown: 'Không xác định',
+    today: 'Hôm nay',
+    yesterday: 'Hôm qua',
+    tomorrow: 'Ngày mai',
+    status: 'Trạng thái',
+    active: 'Hoạt động',
+    inactive: 'Không hoạt động',
+    enabled: 'Đã bật',
+    disabled: 'Đã tắt',
+    yes: 'Có',
+    no: 'Không',
+    optional: 'Tùy chọn',
+    required: 'Bắt buộc',
+    add: 'Thêm',
+    delete: 'Xóa',
+    cancel: 'Hủy',
+    search: 'Tìm kiếm',
+    searchProducts: 'Tìm kiếm sản phẩm',
+    searchProductsPlaceholder: 'Nhập tên sản phẩm...'
+  },
+
   // Common actions
   actions: {
     save: 'Lưu',
@@ -11,6 +46,8 @@ export const VI_TRANSLATIONS = {
     delete: 'Xóa',
     edit: 'Chỉnh sửa',
     add: 'Thêm',
+    create: 'Tạo',
+    update: 'Cập nhật',
     search: 'Tìm kiếm',
     filter: 'Lọc',
     reset: 'Đặt lại',
@@ -21,40 +58,24 @@ export const VI_TRANSLATIONS = {
     confirm: 'Xác nhận',
     close: 'Đóng',
     view: 'Xem',
+    viewAll: 'Xem tất cả',
     viewDetails: 'Xem chi tiết',
-    addToCart: 'Thêm vào giỏ hàng',
-    buyNow: 'Mua ngay',
-    checkout: 'Thanh toán',
     login: 'Đăng nhập',
     logout: 'Đăng xuất',
     register: 'Đăng ký',
-    update: 'Cập nhật',
     refresh: 'Làm mới',
     download: 'Tải xuống',
     upload: 'Tải lên',
     print: 'In',
     export: 'Xuất',
     import: 'Nhập',
-    create: 'Tạo',
     sort: 'Sắp xếp',
-    exportExcel: 'Xuất Excel',
-    copy: 'Sao chép',
-    paste: 'Dán',
-    cut: 'Cắt',
-    undo: 'Hoàn tác',
-    redo: 'Làm lại',
-    reload: 'Tải lại',
-    clear: 'Xóa',
     select: 'Chọn',
     selectAll: 'Chọn tất cả',
+    selectMode: 'Chế độ chọn',
     deselect: 'Bỏ chọn',
-    removeFromCart: 'Xóa khỏi giỏ hàng',
+    clear: 'Xóa',
     retry: 'Thử lại',
-    adjust: 'Điều chỉnh',
-    forgotPassword: 'Quên mật khẩu',
-    changePassword: 'Đổi mật khẩu',
-    updateProfile: 'Cập nhật hồ sơ',
-    viewProfile: 'Xem hồ sơ',
     continue: 'Tiếp tục',
     finish: 'Hoàn thành',
     open: 'Mở',
@@ -68,7 +89,21 @@ export const VI_TRANSLATIONS = {
     reject: 'Từ chối',
     process: 'Xử lý',
     processing: 'Đang xử lý...',
-    refund: 'Hoàn tiền',
+    addToCart: 'Thêm vào giỏ hàng',
+    removeFromCart: 'Xóa khỏi giỏ hàng',
+    buyNow: 'Mua ngay',
+    checkout: 'Thanh toán'
+  },
+
+  // Pagination
+  pagination: {
+    pageSize: 'Kích thước trang',
+    firstPage: 'Trang đầu',
+    previousPage: 'Trang trước', 
+    nextPage: 'Trang tiếp',
+    lastPage: 'Trang cuối',
+    showing: 'Đang hiện',
+    "of": "trong",
   },
 
   // Navigation
@@ -82,396 +117,411 @@ export const VI_TRANSLATIONS = {
     profile: 'Hồ sơ',
     notifications: 'Thông báo',
     settings: 'Cài đặt',
-    help: 'Trợ giúp',
-    contact: 'Liên hệ',
-    about: 'Giới thiệu',
-    admin: 'Quản trị',
     dashboard: 'Bảng điều khiển',
-  },
-
-  // Admin sections
-  admin: {
-    dashboard: 'Bảng điều khiển',
-    products: 'Quản lý sản phẩm',
-    categories: 'Quản lý danh mục',
-    orders: 'Quản lý đơn hàng',
-    payments: 'Quản lý thanh toán',
-    stock: 'Quản lý kho',
-    users: 'Quản lý người dùng',
-    statistics: 'Thống kê',
+    management: 'Quản lý',
     reports: 'Báo cáo',
-    settings: 'Cài đặt hệ thống',
-    managementPortal: 'Cổng quản trị',
-    administrator: 'Quản trị viên',
-    userInformation: 'Thông tin người dùng',
-    username: 'Tên người dùng',
-    roles: 'Vai trò',
+    analytics: 'Phân tích'
   },
 
-  // Product related
-  product: {
-    name: 'Tên sản phẩm',
-    description: 'Mô tả',
-    price: 'Giá',
-    basePrice: 'Giá gốc',
-    salePrice: 'Giá khuyến mãi',
-    discount: 'Giảm giá',
-    category: 'Danh mục',
-    brand: 'Thương hiệu',
-    sku: 'Mã sản phẩm',
-    stock: 'Tồn kho',
-    quantity: 'Số lượng',
-    inStock: 'Còn hàng',
-    outOfStock: 'Hết hàng',
-    lowStock: 'Sắp hết hàng',
-    availability: 'Tình trạng',
-    rating: 'Đánh giá',
-    reviews: 'Nhận xét',
-    specifications: 'Thông số kỹ thuật',
-    features: 'Tính năng',
-    images: 'Hình ảnh',
-    weight: 'Trọng lượng',
-    dimensions: 'Kích thước',
-    color: 'Màu sắc',
-    size: 'Kích cỡ',
-    material: 'Chất liệu',
-    warranty: 'Bảo hành',
-    origin: 'Xuất xứ',
-    manufacturer: 'Nhà sản xuất',
+  // Time and date
+  time: {
+    timeRange: 'Khoảng thời gian',
+    today: 'Hôm nay',
+    yesterday: 'Hôm qua',
+    last7Days: '7 ngày qua',
+    last30Days: '30 ngày qua',
+    last90Days: '90 ngày qua',
+    thisMonth: 'Tháng này',
+    lastMonth: 'Tháng trước',
+    thisYear: 'Năm nay',
+    lastYear: 'Năm trước',
+    custom: 'Tùy chỉnh',
+    from: 'Từ',
+    to: 'Đến',
+    startDate: 'Ngày bắt đầu',
+    endDate: 'Ngày kết thúc'
   },
 
-  // Order related
-  order: {
-    id: 'Mã đơn hàng',
-    date: 'Ngày đặt',
-    status: 'Trạng thái',
-    total: 'Tổng tiền',
-    subtotal: 'Tạm tính',
-    shipping: 'Phí vận chuyển',
-    tax: 'Thuế',
-    discount: 'Giảm giá',
-    customer: 'Khách hàng',
-    address: 'Địa chỉ',
-    phone: 'Số điện thoại',
-    email: 'Email',
-    note: 'Ghi chú',
-    paymentMethod: 'Phương thức thanh toán',
-    paymentStatus: 'Trạng thái thanh toán',
-    shippingMethod: 'Phương thức vận chuyển',
-    trackingNumber: 'Mã vận đơn',
-    estimatedDelivery: 'Dự kiến giao hàng',
-    items: 'Sản phẩm',
-    quantity: 'Số lượng',
-    unitPrice: 'Đơn giá',
-    totalPrice: 'Thành tiền',
-  },
-
-  // Stock management
-  stockMovement: {
-    movement: 'Xuất nhập kho',
-    adjustment: 'Điều chỉnh kho',
-    incoming: 'Nhập kho',
-    outgoing: 'Xuất kho',
-    transfer: 'Chuyển kho',
-    stocktaking: 'Kiểm kho',
-    damaged: 'Hàng hỏng',
-    expired: 'Hàng hết hạn',
-    returned: 'Hàng trả lại',
-    reserved: 'Hàng đặt trước',
-    available: 'Hàng có sẵn',
-    onHold: 'Tạm giữ',
-    location: 'Vị trí',
-    warehouse: 'Kho hàng',
-    supplier: 'Nhà cung cấp',
-    batch: 'Lô hàng',
-    expiryDate: 'Ngày hết hạn',
-    manufactureDate: 'Ngày sản xuất',
-    costPrice: 'Giá vốn',
-    retailPrice: 'Giá bán lẻ',
-    wholesalePrice: 'Giá bán sỉ',
-  },
-
-  // Payment related
-  payment: {
-    method: 'Phương thức thanh toán',
-    status: 'Trạng thái thanh toán',
-    amount: 'Số tiền',
-    date: 'Ngày thanh toán',
-    reference: 'Mã tham chiếu',
-    gateway: 'Cổng thanh toán',
-    fee: 'Phí giao dịch',
-    netAmount: 'Số tiền thực nhận',
-    currency: 'Loại tiền',
-    exchangeRate: 'Tỷ giá',
-    cashOnDelivery: 'Thanh toán khi nhận hàng',
-    creditCard: 'Thẻ tín dụng',
-    totalPayments: 'Tổng số giao dịch',
-    totalRevenue: 'Tổng doanh thu',
-    searchPlaceholder: 'Tìm theo mã thanh toán, mã đơn hàng, hoặc người dùng...',
-    paymentId: 'Mã thanh toán',
-    processPayment: 'Xử lý thanh toán',
-    processRefund: 'Xử lý hoàn tiền',
-    refundAmount: 'Số tiền hoàn',
-    refundReason: 'Lý do hoàn tiền',
-    refundReasonPlaceholder: 'Lý do hoàn tiền (ít nhất 10 ký tự)',
-  },
-
-  // Status labels
-  status: {
-    active: 'Hoạt động',
-    inactive: 'Không hoạt động',
-    pending: 'Đang chờ',
-    processing: 'Đang xử lý',
-    completed: 'Hoàn thành',
-    cancelled: 'Đã hủy',
-    failed: 'Thất bại',
-    successful: 'Thành công',
-    expired: 'Hết hạn',
-    draft: 'Bản nháp',
-    published: 'Đã xuất bản',
-    archived: 'Đã lưu trữ',
-    blocked: 'Bị chặn',
-    verified: 'Đã xác minh',
-    unverified: 'Chưa xác minh',
-  },
-
-  // Form fields
+  // Form validation
   form: {
-    required: 'Bắt buộc',
-    optional: 'Tùy chọn',
-    placeholder: {
-      search: 'Tìm kiếm...',
-      name: 'Nhập tên...',
-      email: 'Nhập email...',
-      phone: 'Nhập số điện thoại...',
-      address: 'Nhập địa chỉ...',
-      description: 'Nhập mô tả...',
-      note: 'Nhập ghi chú...',
-      price: 'Nhập giá...',
-      quantity: 'Nhập số lượng...',
-    },
     validation: {
       required: 'Trường này là bắt buộc',
       email: 'Email không hợp lệ',
-      phone: 'Số điện thoại không hợp lệ',
-      minLength: 'Tối thiểu {min} ký tự',
-      maxLength: 'Tối đa {max} ký tự',
-      min: 'Giá trị tối thiểu là {min}',
-      max: 'Giá trị tối đa là {max}',
-      positive: 'Phải là số dương',
-      nonNegative: 'Phải là số không âm',
+      minLength: 'Tối thiểu {{min}} ký tự',
+      maxLength: 'Tối đa {{max}} ký tự',
+      min: 'Giá trị tối thiểu là {{min}}',
+      max: 'Giá trị tối đa là {{max}}',
+      pattern: 'Định dạng không hợp lệ',
+      number: 'Phải là số',
       integer: 'Phải là số nguyên',
-      decimal: 'Phải là số thập phân',
-      currency: 'Định dạng tiền tệ không hợp lệ',
-      url: 'URL không hợp lệ',
-      date: 'Ngày không hợp lệ',
-      error: 'Lỗi xác thực',
+      positive: 'Phải là số dương',
+      error: 'Lỗi xác thực'
     },
-    name: 'Tên',
-    email: 'Email',
-    password: 'Mật khẩu',
-    confirmPassword: 'Xác nhận mật khẩu',
-    phone: 'Số điện thoại',
-    address: 'Địa chỉ',
-    city: 'Thành phố',
-    state: 'Tỉnh/Thành',
-    country: 'Quốc gia',
-    zipCode: 'Mã bưu điện',
-    description: 'Mô tả',
-    notes: 'Ghi chú',
-    status: 'Trạng thái',
-    type: 'Loại',
-    category: 'Danh mục',
-    title: 'Tiêu đề',
-    content: 'Nội dung',
-    image: 'Hình ảnh',
-    file: 'Tệp tin',
-    date: 'Ngày',
-    time: 'Thời gian',
-    dateTime: 'Ngày giờ',
-    startDate: 'Ngày bắt đầu',
-    endDate: 'Ngày kết thúc',
-    searchPlaceholder: 'Tìm kiếm thanh toán',
-    allStatuses: 'Tất cả trạng thái',
-    allMethods: 'Tất cả phương thức',
+    category: "Danh mục"
+  },
+
+  // Admin sections
+  sections: {
+    dashboard: 'Bảng điều khiển',
+    productManagement: 'Quản lý sản phẩm',
+    categoryManagement: 'Quản lý danh mục',
+    orderManagement: 'Quản lý đơn hàng',
+    userManagement: 'Quản lý người dùng',
+    stockManagement: 'Quản lý kho hàng',
+    paymentManagement: 'Quản lý thanh toán',
+    reportManagement: 'Quản lý báo cáo'
+  },
+
+  // Admin navigation
+  adminNavigation: {
+    dashboard: 'Bảng điều khiển',
+    products: 'Sản phẩm',
+    categories: 'Danh mục',
+    orders: 'Đơn hàng',
+    users: 'Người dùng',
+    payments: 'Thanh toán',
+    stock: 'Kho hàng'
+  },
+
+  // Admin dashboard
+  admin: {
+    dashboard: {
+      title: 'Bảng điều khiển quản trị',
+      systemStatus: 'Trạng thái hệ thống',
+      lastUpdated: 'Cập nhật lần cuối',
+      totalProducts: 'Tổng sản phẩm',
+      activeProducts: 'Sản phẩm hoạt động',
+      totalOrders: 'Tổng đơn hàng',
+      pendingOrders: 'Đơn hàng chờ xử lý',
+      totalRevenue: 'Tổng doanh thu',
+      averageOrderValue: 'Giá trị đơn hàng trung bình',
+      totalUsers: 'Tổng người dùng',
+      activeUsers: 'Người dùng hoạt động',
+      stockValue: 'Giá trị kho hàng',
+      stockItems: 'Tổng sản phẩm kho',
+      lowStockItems: 'Sản phẩm sắp hết hàng',
+      criticalAlerts: 'Cảnh báo nghiêm trọng',
+      paymentSuccess: 'Thanh toán thành công',
+      totalPayments: 'Tổng thanh toán'
+    },
+    managementPortal: 'Cổng quản lý',
+    administrator: 'Quản trị viên',
+    // users: 'Người dùng',
+  },
+
+  // Statistics
+  stats: {
+    totalProducts: 'Tổng sản phẩm',
+    totalOrders: 'Tổng đơn hàng',
+    totalUsers: 'Tổng người dùng',
+    totalRevenue: 'Tổng doanh thu',
+    averageOrderValue: 'Giá trị đơn hàng trung bình'
   },
 
   // Messages
   messages: {
     success: {
-      created: 'Tạo thành công',
-      updated: 'Cập nhật thành công',
-      deleted: 'Xóa thành công',
-      saved: 'Lưu thành công',
-      uploaded: 'Tải lên thành công',
-      sent: 'Gửi thành công',
-      completed: 'Hoàn thành thành công',
+      productCreated: 'Sản phẩm đã được tạo thành công',
+      productUpdated: 'Sản phẩm đã được cập nhật thành công',
+      productDeleted: 'Sản phẩm đã được xóa thành công',
+      categoryCreated: 'Danh mục đã được tạo thành công',
+      categoryUpdated: 'Danh mục đã được cập nhật thành công',
+      categoryDeleted: 'Danh mục đã được xóa thành công',
+      orderUpdated: 'Đơn hàng đã được cập nhật thành công',
       stockAdjustmentCompleted: 'Điều chỉnh kho hoàn thành thành công',
-    },
-    error: {
-      general: 'Có lỗi xảy ra',
-      network: 'Lỗi kết nối mạng',
-      notFound: 'Không tìm thấy',
-      unauthorized: 'Không có quyền truy cập',
-      forbidden: 'Truy cập bị từ chối',
-      validation: 'Dữ liệu không hợp lệ',
-      serverError: 'Lỗi máy chủ',
-      timeout: 'Hết thời gian chờ',
-      fileSize: 'Kích thước file quá lớn',
-      fileType: 'Loại file không được hỗ trợ',
+      stockCreated: 'Mặt hàng kho đã được tạo thành công',
+      alertAcknowledged: 'Cảnh báo đã được xác nhận',
+      bulkUpdateCompleted: 'Cập nhật hàng loạt hoàn thành thành công',
+      deleted: 'Đã xóa thành công',
+      dataLoaded: 'Dữ liệu đã được tải thành công',
+      dataExported: 'Dữ liệu đã được xuất thành công',
     },
     confirmation: {
-      delete: 'Bạn có chắc chắn muốn xóa?',
-      cancel: 'Bạn có chắc chắn muốn hủy?',
-      save: 'Bạn có muốn lưu thay đổi?',
-      exit: 'Bạn có muốn thoát?',
-      logout: 'Bạn có muốn đăng xuất?',
+      delete: "Bạn có chắc chắn muốn xóa mục này không?",
+    },
+    error: {
+      general: 'Đã xảy ra lỗi, vui lòng thử lại sau',
+      productCreationFailed: 'Không thể tạo sản phẩm',
+      productUpdateFailed: 'Không thể cập nhật sản phẩm',
+      productDeletionFailed: 'Không thể xóa sản phẩm',
+      categoryCreationFailed: 'Không thể tạo danh mục',
+      categoryUpdateFailed: 'Không thể cập nhật danh mục',
+      categoryDeletionFailed: 'Không thể xóa danh mục',
+      orderUpdateFailed: 'Không thể cập nhật đơn hàng',
+      stockAdjustmentFailed: 'Không thể điều chỉnh kho',
+      stockCreationFailed: 'Không thể tạo mặt hàng kho',
+      alertAcknowledgeFailed: 'Không thể xác nhận cảnh báo',
+      bulkUpdateFailed: 'Cập nhật hàng loạt thất bại',
+      loadDataFailed: 'Không thể tải dữ liệu',
+      networkError: 'Lỗi kết nối mạng',
+      serverError: 'Lỗi máy chủ',
+      unauthorizedAccess: 'Truy cập không được phép'
     },
     info: {
-      loading: 'Đang tải...',
-      saving: 'Đang lưu...',
-      uploading: 'Đang tải lên...',
-      processing: 'Đang xử lý...',
-      noData: 'Không có dữ liệu',
-      noPaymentsFound: 'Không tìm thấy thanh toán nào phù hợp',
-      noPaymentsAvailable: 'Chưa có thanh toán nào',
-    },
+      noData: "Không có dữ liệu"
+    }
   },
 
-  // Pagination
-  pagination: {
-    page: 'Trang',
-    of: 'của',
-    total: 'Tổng cộng',
-    items: 'mục',
-    itemsPerPage: 'Mục mỗi trang',
-    first: 'Đầu tiên',
-    last: 'Cuối cùng',
-    next: 'Tiếp theo',
-    previous: 'Trước',
-    showing: 'Hiển thị',
-    to: 'đến',
-    results: 'kết quả',
-    noResults: 'Không có kết quả',
-  },
-
-  // Date and time
-  dateTime: {
-    today: 'Hôm nay',
-    yesterday: 'Hôm qua',
-    tomorrow: 'Ngày mai',
-    thisWeek: 'Tuần này',
-    lastWeek: 'Tuần trước',
-    thisMonth: 'Tháng này',
-    lastMonth: 'Tháng trước',
-    thisYear: 'Năm này',
-    lastYear: 'Năm ngoái',
-    days: ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'],
-    daysShort: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
-    months: [
-      'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-      'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
-    ],
-    monthsShort: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
-  },
-
-  // Units
-  units: {
-    currency: '₫',
-    piece: 'cái',
-    kilogram: 'kg',
-    gram: 'g',
-    liter: 'l',
-    milliliter: 'ml',
-    meter: 'm',
-    centimeter: 'cm',
-    millimeter: 'mm',
-    inch: 'inch',
-    foot: 'ft',
-    percent: '%',
-  },
-
-  // Services
-  services: {
-    freeShipping: 'Miễn phí vận chuyển',
-    fastDelivery: 'Giao hàng nhanh',
-    warranty: 'Bảo hành',
-    support247: 'Hỗ trợ 24/7',
-    returnPolicy: 'Chính sách đổi trả',
-    securePayment: 'Thanh toán an toàn',
-  },
-
-  // Search related
-  search: {
-    placeholder: 'Tìm kiếm sản phẩm...',
-    hintedSearchText: 'Nhập từ khóa tìm kiếm...',
-    noResults: 'Không tìm thấy kết quả',
-    searchResults: 'Kết quả tìm kiếm',
-    suggestions: 'Gợi ý tìm kiếm'
-  },
-
-  stats: {
-    totalUsers: 'Tổng số người dùng',
-    totalProducts: 'Tổng số sản phẩm',
-    totalOrders: 'Tổng số đơn hàng',
-    totalRevenue: 'Tổng doanh thu',
-    totalStockValue: 'Giá trị tồn kho',
-    lowStockAlerts: 'Cảnh báo tồn kho thấp',
-    outOfStockItems: 'Sản phẩm hết hàng',
-    pendingPayments: 'Thanh toán chờ xử lý',
-    completedPayments: 'Thanh toán hoàn thành',
-    refundedPayments: 'Thanh toán hoàn tiền',
-    paymentVolume: 'Khối lượng thanh toán'
-  },
-
-  sections: {
-    stockManagement: 'Quản lý kho hàng',
-    paymentManagement: 'Quản lý thanh toán',
-    ordersManagement: 'Quản lý đơn hàng',
-    productsManagement: 'Quản lý sản phẩm',
-    usersManagement: 'Quản lý người dùng',
-    categoriesManagement: 'Quản lý danh mục'
-  },
-
-  // Stock management specific
+  // Stock Management - Comprehensive section
   stock: {
-    stockValue: 'Giá trị kho',
+    // Main navigation and views
+    dashboard: 'Bảng điều khiển kho',
+    dashboardDescription: 'Tổng quan và quản lý tình trạng kho hàng',
+    stockList: 'Danh sách kho',
+    history: 'Lịch sử',
+    bulkUpdate: 'Cập nhật loạt',
+    management: 'Quản lý kho',
+    
+    // Views and filters
+    view: 'Chế độ xem',
+    overview: 'Tổng quan',
+    alerts: 'Cảnh báo',
+    movements: 'Biến động',
+    recentMovements: 'Biến động gần đây',
+    recentAlerts: 'Cảnh báo gần đây',
     lowStock: 'Tồn kho thấp',
     outOfStock: 'Hết hàng',
-    stockAlerts: 'Cảnh báo kho',
-    adjustStock: 'Điều chỉnh kho',
-    searchProducts: 'Tìm sản phẩm',
-    searchProductsPlaceholder: 'Tìm theo tên sản phẩm hoặc SKU...',
+    
+    // Stock status and values
     stockStatus: 'Trạng thái kho',
-    allItems: 'Tất cả sản phẩm',
-    lowStockItems: 'Tồn kho thấp',
-    outOfStockItems: 'Hết hàng',
+    stockValue: 'Giá trị kho',
+    totalValue: 'Tổng giá trị',
+    currentValue: 'Giá trị hiện tại',
     available: 'Có sẵn',
     reserved: 'Đã đặt trước',
-    minLevel: 'Mức tối thiểu',
-    category: 'Danh mục',
-    value: 'Giá trị',
     current: 'Hiện tại',
+    currentStock: 'Tồn kho hiện tại',
+    inStock: 'Còn hàng',
+    outOfStockLabel: 'Hết hàng',
+    lowStockLabel: 'Sắp hết hàng',
+    stockSummary: 'sản phẩm • tổng giá trị',
+    
+    // Stock levels
+    availableStock: 'Tồn kho có sẵn',
+    reservedStock: 'Tồn kho đã đặt',
+    minStockLevel: 'Mức tồn kho tối thiểu',
+    maxStockLevel: 'Mức tồn kho tối đa',
+    minLevel: 'Mức tối thiểu',
     threshold: 'Ngưỡng',
-    acknowledge: 'Xác nhận',
+    
+    // Stock items and categories
+    stockItems: 'Mặt hàng kho',
+    lowStockItems: 'Tồn kho thấp',
+    outOfStockItems: 'Sản phẩm hết hàng',
+    allItems: 'Tất cả sản phẩm',
+    category: 'Danh mục',
+    allCategories: 'Tất cả danh mục',
+    
+    // Stock operations
+    adjustStock: 'Điều chỉnh kho',
     adjustmentType: 'Loại điều chỉnh',
     quantity: 'Số lượng',
+    newQuantity: 'Số lượng mới',
+    change: 'Thay đổi',
     reason: 'Lý do',
     reasonPlaceholder: 'Lý do điều chỉnh',
-    currentStock: 'Tồn kho hiện tại',
+    updateReason: 'Lý do cập nhật',
+    unitCost: 'Giá vốn',
+    location: 'Vị trí',
+    locationPlaceholder: 'Vị trí kho, khu vực...',
+    notes: 'Ghi chú',
+    notesPlaceholder: 'Ghi chú bổ sung...',
+    warehouse: 'Kho',
+    
+    // Stock alerts
+    stockAlerts: 'Cảnh báo kho',
+    acknowledge: 'Xác nhận',
+    alertAcknowledged: 'Đã xác nhận cảnh báo',
+    failedToAcknowledgeAlert: 'Không thể xác nhận cảnh báo',
+    noActiveAlerts: 'Không có cảnh báo nào',
+    noLowStockItems: 'Không có sản phẩm nào sắp hết hàng',
+    
+    // Stock movements and history
+    stockMovementHistory: 'Lịch sử biến động kho',
+    productMovementHistory: 'Lịch sử biến động sản phẩm',
+    viewDetailedMovementHistory: 'Xem chi tiết lịch sử biến động kho hàng',
+    movementType: 'Loại biến động',
+    movement: 'Biến động',
+    allTypes: 'Tất cả loại',
+    performedBy: 'Thực hiện bởi',
+    stocktaking: 'Kiểm kho',
+    
+    // Search and filtering
+    searchProducts: 'Tìm sản phẩm',
+    searchProductsPlaceholder: 'Tìm theo tên sản phẩm hoặc SKU...',
+    searchReference: 'Tìm tham chiếu',
+    searchReferencePlaceholder: 'Tìm theo mã đơn hàng, mã tham chiếu...',
+    startDate: 'Từ ngày',
+    endDate: 'Đến ngày',
+    
+    // Add Stock Form
+    addStockItem: 'Thêm mặt hàng kho',
+    addStockDescription: 'Thêm sản phẩm mới vào hệ thống quản lý kho',
+    stockInfo: 'Thông tin kho',
+    createStockItem: 'Tạo mặt hàng kho',
+    creating: 'Đang tạo...',
+    createSuccess: 'Tạo mặt hàng kho thành công',
+    createError: 'Có lỗi xảy ra khi tạo mặt hàng kho',
+    initialStock: 'Số lượng ban đầu',
+    sku: 'Mã SKU',
+    skuPlaceholder: 'Nhập mã SKU duy nhất...',
+    lowStockThreshold: 'Ngưỡng tồn kho thấp',
+    lowStockThresholdPlaceholder: 'Ngưỡng cảnh báo tồn kho thấp',
+    variations: 'Biến thể',
+    variationsPlaceholder: 'Chọn biến thể sản phẩm...',
+    noVariations: 'Không có biến thể',
+    selectVariationsDescription: 'Chọn và cấu hình các biến thể cho mặt hàng kho này',
+    variationValues: 'Giá trị biến thể',
+    variationValuesPlaceholder: 'Nhập các giá trị, phân cách bằng dấu phẩy (ví dụ: Đỏ, Xanh, Vàng)',
+    variationValuesHint: 'Phân cách các giá trị bằng dấu phẩy. Ví dụ: Size S, Size M, Size L',
+    
+    // Bulk operations
+    bulkStockUpdate: 'Cập nhật kho hàng loạt',
+    bulkUpdateDescription: 'Cập nhật số lượng kho cho nhiều sản phẩm cùng lúc',
+    selectAll: 'Chọn tất cả',
+    selectNone: 'Bỏ chọn tất cả',
+    selectedItems: 'Đã chọn',
+    selectedItemsCount: 'Đã chọn {{count}} sản phẩm',
+    hasChanges: 'Có thay đổi',
+    hasUnsavedChanges: 'Có thay đổi chưa lưu',
+    noChanges: 'Không có thay đổi',
+    updating: 'Đang cập nhật...',
+    updateSelected: 'Cập nhật đã chọn',
+    useGlobalReason: 'Sử dụng lý do chung cho tất cả',
+    globalUpdateReason: 'Lý do cập nhật chung',
+    globalReasonPlaceholder: 'Nhập lý do cập nhật cho tất cả sản phẩm được chọn',
+    bulkUpdateSuccess: 'Cập nhật kho hàng loạt thành công',
+    bulkUpdateError: 'Có lỗi xảy ra khi cập nhật kho hàng loạt',
+    
+    // Export functionality
+    exportCSV: 'Xuất CSV',
+    exportExcel: 'Xuất Excel',
+    
+    // Error states
     processing: 'Đang xử lý...',
     noStockData: 'Không thể tải dữ liệu kho',
     noStockItems: 'Không có sản phẩm kho nào',
     noStockItemsSearch: 'Không tìm thấy sản phẩm kho nào phù hợp',
+    noMovementHistory: 'Không có lịch sử biến động',
     failedToLoad: 'Không thể tải dữ liệu kho',
-    exportCSV: 'Xuất CSV',
-    exportExcel: 'Xuất Excel',
+    failedToLoadHistory: 'Không thể tải lịch sử biến động',
+    failedToAdjust: 'Không thể điều chỉnh kho',
+    
+    // Validation messages
     noItemSelected: 'Không có mục nào được chọn để điều chỉnh kho',
+    noItemsSelected: 'Chưa chọn sản phẩm nào để cập nhật',
     cannotRemoveMoreThanAvailable: 'Không thể lấy ra nhiều hơn số lượng có sẵn',
-    failedToAdjust: 'Không thể điều chỉnh kho'
+    reasonRequiredForAllItems: 'Vui lòng nhập lý do cho tất cả sản phẩm được chọn',
+    globalReasonRequired: 'Vui lòng nhập lý do chung',
+    invalidAlertId: 'ID cảnh báo không hợp lệ',
+    invalidExportFormat: 'Định dạng xuất không hợp lệ',
+    alertAcknowledgedSuccessfully: 'Cảnh báo đã được xác nhận thành công',
+    stockReportExported: 'Báo cáo kho đã được xuất thành công dưới định dạng',
+    reference: 'Tham chiếu',
+    referenceShort: 'Ref'
   },
 
-  // Orders management specific
+  // Product Management
+  products: {
+    // Basic info
+    name: 'Tên sản phẩm',
+    productName: 'Tên sản phẩm',
+    description: 'Mô tả sản phẩm',
+    productDescription: 'Mô tả sản phẩm',
+    basePrice: 'Giá gốc',
+    price: 'Giá',
+    category: 'Danh mục',
+    selectCategory: 'Chọn danh mục',
+    selectProduct: 'Chọn sản phẩm',
+    productInfo: 'Thông tin sản phẩm',
+    
+    // Images
+    images: 'Hình ảnh',
+    image: 'Hình ảnh',
+    imageUrl: 'URL hình ảnh',
+    addNewImage: 'Thêm hình ảnh mới',
+    uploadImages: 'Tải lên hình ảnh',
+    
+    // Variations
+    variations: 'Biến thể',
+    variation: 'Biến thể',
+    addVariation: 'Thêm biến thể',
+    variationType: 'Loại biến thể',
+    variationName: 'Tên biến thể',
+    additionalPrice: 'Giá bổ sung',
+    noVariations: 'Chưa có biến thể nào',
+    
+    // Dynamic fields
+    dynamicFields: 'Thuộc tính',
+    basicInfo: 'Thông tin cơ bản',
+    detailsFor: 'Thông tin chi tiết cho',
+    detailInfo: 'Thông tin chi tiết',
+    noDynamicFields: 'Danh mục này không có trường thông tin bổ sung',
+    selectCategoryFirst: 'Vui lòng chọn danh mục trước',
+    
+    // Actions
+    addProduct: 'Thêm sản phẩm',
+    addNew: 'Thêm sản phẩm',
+    editProduct: 'Chỉnh sửa sản phẩm',
+    updateProduct: 'Cập nhật sản phẩm',
+    deleteProduct: 'Xóa sản phẩm',
+    
+    // Search and filter
+    searchProducts: 'Tìm sản phẩm',
+    searchProductsPlaceholder: 'Tìm theo tên sản phẩm...',
+    allCategories: 'Tất cả danh mục',
+    
+    // States
+    stock: 'Tồn kho',
+    inStock: 'Còn hàng',
+    outOfStock: 'Hết hàng',
+    lowStock: 'Sắp hết hàng',
+    
+    // Messages
+    updateSuccess: 'Sản phẩm đã được cập nhật thành công',
+    updateError: 'Có lỗi xảy ra khi cập nhật sản phẩm',
+    updating: 'Đang cập nhật...',
+    createSuccess: 'Sản phẩm đã được tạo thành công',
+    createError: 'Có lỗi xảy ra khi tạo sản phẩm',
+    creating: 'Đang tạo...',
+    
+    // Error states
+    noProductsFound: 'Không tìm thấy sản phẩm nào',
+    noProductsAvailable: 'Chưa có sản phẩm nào',
+    failedToLoadProducts: 'Không thể tải danh sách sản phẩm'
+  },
+
+  // Category Management
+  categories: {
+    categoryName: 'Tên danh mục',
+    categoryDescription: 'Mô tả danh mục',
+    categoryImage: 'Hình ảnh danh mục',
+    productCount: 'sản phẩm',
+    addCategory: 'Thêm danh mục',
+    editCategory: 'Chỉnh sửa danh mục',
+    deleteCategory: 'Xóa danh mục',
+    searchCategories: 'Tìm danh mục',
+    searchCategoriesPlaceholder: 'Tìm theo tên danh mục...',
+    categoryNamePlaceholder: 'Nhập tên danh mục',
+    categoryDescriptionPlaceholder: 'Mô tả danh mục này...',
+    dynamicFieldPlaceholder: 'VD: Kích thước, Màu sắc, Chất liệu',
+    description: 'Mô tả',
+    uploadCategoryImage: 'Tải lên ảnh danh mục',
+    addFirstField: 'Thêm trường đầu tiên',
+    requiredField: 'Trường bắt buộc',
+    noCategoriesAvailable: 'Chưa có danh mục nào',
+    failedToLoadCategories: 'Không thể tải danh sách danh mục',
+    categoryDetails: 'Chi tiết danh mục',
+    dynamicFields: 'Trường động',
+    fieldName: 'Tên trường',
+    fieldType: 'Loại trường',
+    appliesTo: 'Áp dụng cho',
+    required: 'Bắt buộc',
+    addField: 'Thêm trường',
+    noDescription: 'Không có mô tả',
+  },
+
+  // Order Management
   orders: {
     orderId: 'Mã đơn hàng',
     customer: 'Khách hàng',
@@ -492,40 +542,46 @@ export const VI_TRANSLATIONS = {
     dateTo: 'Đến ngày',
     orderTotal: 'Tổng đơn hàng',
     customerInfo: 'Thông tin khách hàng',
+    totalOrders: "đơn hàng",
     phone: 'Số điện thoại',
     notes: 'Ghi chú',
     items: 'sản phẩm',
     noOrdersFound: 'Không tìm thấy đơn hàng nào',
     noOrdersAvailable: 'Chưa có đơn hàng nào',
-    failedToLoadOrders: 'Không thể tải danh sách đơn hàng'
+    failedToLoadOrders: 'Không thể tải danh sách đơn hàng',
+    exportCSV: 'Xuất file CSV',
+    exportExcel: 'Xuất file Excel',
+    
+    // User order statuses
+    myOrders: 'Đơn hàng của tôi',
+    all: 'Tất cả',
+    pending: 'Chờ xử lý',
+    processing: 'Đang giao',
+    completed: 'Hoàn thành',
+    cancelled: 'Đã hủy',
+    
+    // Order status translations
+    status: {
+      PENDING_PAYMENT: 'Chờ thanh toán',
+      PAID: 'Đã thanh toán',
+      CONFIRMED: 'Đã xác nhận',
+      PROCESSING: 'Đang xử lý',
+      SHIPPED: 'Đang giao hàng',
+      DELIVERED: 'Đã giao hàng',
+      CANCELLED: 'Đã hủy',
+      PAYMENT_FAILED: 'Thanh toán thất bại'
+    },
+    
+    // Payment status translations
+    paymentStatusLabels: {
+      PENDING: 'Chờ thanh toán',
+      SUCCESSFUL: 'Thành công',
+      FAILED: 'Thất bại',
+      REFUNDED: 'Đã hoàn tiền'
+    }
   },
 
-  // Products management specific
-  products: {
-    productName: 'Tên sản phẩm',
-    productDescription: 'Mô tả sản phẩm',
-    basePrice: 'Giá gốc',
-    price: 'Giá',
-    images: 'Hình ảnh',
-    variations: 'Biến thể',
-    addProduct: 'Thêm sản phẩm',
-    editProduct: 'Chỉnh sửa sản phẩm',
-    deleteProduct: 'Xóa sản phẩm',
-    searchProducts: 'Tìm sản phẩm',
-    searchProductsPlaceholder: 'Tìm theo tên sản phẩm...',
-    allCategories: 'Tất cả danh mục',
-    noProductsFound: 'Không tìm thấy sản phẩm nào',
-    noProductsAvailable: 'Chưa có sản phẩm nào',
-    failedToLoadProducts: 'Không thể tải danh sách sản phẩm',
-    uploadImages: 'Tải lên hình ảnh',
-    addVariation: 'Thêm biến thể',
-    variationType: 'Loại biến thể',
-    variationName: 'Tên biến thể',
-    additionalPrice: 'Giá bổ sung',
-    dynamicFields: 'Thuộc tính'
-  },
-
-  // Users management specific
+  // User Management
   users: {
     userName: 'Tên người dùng',
     userEmail: 'Email người dùng',
@@ -551,28 +607,9 @@ export const VI_TRANSLATIONS = {
     accountSettings: 'Cài đặt tài khoản'
   },
 
-  // Categories management specific
-  categories: {
-    categoryName: 'Tên danh mục',
-    categoryDescription: 'Mô tả danh mục',
-    categoryImage: 'Hình ảnh danh mục',
-    productCount: 'Số lượng sản phẩm',
-    addCategory: 'Thêm danh mục',
-    editCategory: 'Chỉnh sửa danh mục',
-    deleteCategory: 'Xóa danh mục',
-    searchCategories: 'Tìm danh mục',
-    searchCategoriesPlaceholder: 'Tìm theo tên danh mục...',
-    noCategoriesFound: 'Không tìm thấy danh mục nào',
-    noCategoriesAvailable: 'Chưa có danh mục nào',
-    failedToLoadCategories: 'Không thể tải danh sách danh mục',
-    categoryDetails: 'Chi tiết danh mục',
-    dynamicFields: 'Trường động',
-    fieldName: 'Tên trường',
-    fieldType: 'Loại trường',
-    appliesTo: 'Áp dụng cho',
-    required: 'Bắt buộc',
-    addField: 'Thêm trường'
-  },
+  search: {
+    hintedSearchText: 'Tìm kiếm theo tên, mô tả...'
+  }
 } as const;
 
 /**

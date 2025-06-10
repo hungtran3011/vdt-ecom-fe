@@ -1,11 +1,22 @@
 // Stock Management Types
+export interface ProductVariation {
+  id: number;
+  name: string;
+  values: string[];
+}
+
 export interface StockItem {
   id: number;
+  sku: string;
   productId: number;
   productName: string;
   productImage?: string;
   categoryName: string;
-  sku?: string;
+  variations?: ProductVariation[];
+  quantity: number;
+  lowStockThreshold: number;
+  status: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+  // Legacy fields for backward compatibility
   currentStock: number;
   reservedStock: number;
   availableStock: number;
@@ -84,6 +95,18 @@ export interface UpdateStockRequest {
   minStockLevel?: number;
   maxStockLevel?: number;
   unitCost?: number;
+}
+
+export interface CreateStockRequest {
+  sku: string;
+  productId: number;
+  variations?: {
+    id: number;
+    name: string;
+    values: string[];
+  }[];
+  quantity: number;
+  lowStockThreshold?: number;
 }
 
 export interface StockSummary {

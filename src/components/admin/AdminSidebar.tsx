@@ -9,37 +9,37 @@ import { t } from '@/utils/localization';
 const menuItems = [
   {
     href: '/admin',
-    label: t('admin.dashboard'),
+    label: t('adminNavigation.dashboard'),
     icon: 'dashboard'
   },
   {
     href: '/admin/users',
-    label: t('admin.users'),
+    label: t('adminNavigation.users'),
     icon: 'people'
   },
   {
     href: '/admin/products',
-    label: t('admin.products'),
+    label: t('adminNavigation.products'),
     icon: 'inventory_2'
   },
   {
     href: '/admin/stock',
-    label: t('admin.stock'),
+    label: t('adminNavigation.stock'),
     icon: 'warehouse'
   },
   {
     href: '/admin/orders',
-    label: t('admin.orders'),
+    label: t('adminNavigation.orders'),
     icon: 'shopping_cart'
   },
   {
     href: '/admin/payments',
-    label: t('admin.payments'),
+    label: t('adminNavigation.payments'),
     icon: 'payments'
   },
   {
     href: '/admin/categories',
-    label: t('admin.categories'),
+    label: t('adminNavigation.categories'),
     icon: 'category'
   }
 ];

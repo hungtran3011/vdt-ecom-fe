@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
+import { t } from '@/utils/localization';
 
 interface DebugInfo {
   environment: Record<string, string>;
@@ -65,7 +66,7 @@ export default function TokenDebugger() {
         </h3>
         <Button
           variant="outlined"
-          label="Refresh"
+          label={t('common.refresh')}
           hasIcon
           icon="refresh"
           onClick={fetchDebugInfo}

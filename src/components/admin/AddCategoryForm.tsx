@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import TextField from '@/components/TextField';
@@ -13,17 +15,12 @@ import Snackbar from '@/components/Snackbar';
 import { Category, CategoryDynamicField, CreateCategoryRequest } from '@/types/Category';
 import { useCreateCategory } from '@/hooks/useCategories';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { categoryFormSchema, type CategoryFormData } from '@/schemas/category';
+import { t } from '@/utils/localization';
 
 interface AddCategoryFormProps {
   onCancel: () => void;
   onCategoryAdded: (category: Category) => void;
-}
-
-interface NewCategoryForm {
-  name: string;
-  description: string;
-  imageUrl: string;
-  dynamicFields: (Omit<CategoryDynamicField, 'id'> & { tempId: string })[];
 }
 
 const FIELD_TYPE_OPTIONS = [
@@ -47,12 +44,22 @@ const TAB_OPTIONS = [
 
 export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCategoryFormProps) {
   const [activeTab, setActiveTab] = useState('basic');
-  const [newCategory, setNewCategory] = useState<NewCategoryForm>({ 
-    name: '', 
-    description: '', 
-    imageUrl: '',
-    dynamicFields: []
+  const [imageUrl, setImageUrl] = useState('');
+  const [dynamicFields, setDynamicFields] = useState<(Omit<CategoryDynamicField, 'id'> & { tempId: string })[]>([]);
+  
+  // React Hook Form setup
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<CategoryFormData>({
+    resolver: zodResolver(categoryFormSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      isActive: true,
+      parentCategoryId: null
+    }
   });
+
+  // Watch form values for real-time updates
+  const watchedName = watch('name');
   
   // Use TanStack Query mutation for creating categories
   const createCategory = useCreateCategory();
@@ -60,22 +67,21 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
   // Snackbar for notifications
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
-  const handleAddCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCategory.name.trim()) return;
-
+  const handleAddCategory = async (data: CategoryFormData) => {
     try {
       // Create the category data to send to the API
       const categoryData: CreateCategoryRequest = {
-        name: newCategory.name.trim(),
-        description: newCategory.description.trim() || undefined,
-        imageUrl: newCategory.imageUrl.trim() || undefined,
-        dynamicFields: newCategory.dynamicFields.length > 0 ? newCategory.dynamicFields : undefined
+        name: data.name.trim(),
+        description: data.description || undefined,
+        imageUrl: imageUrl.trim() || undefined,
+        dynamicFields: dynamicFields.length > 0 ? dynamicFields : undefined
       };
 
       const addedCategory = await createCategory.mutateAsync(categoryData);
       onCategoryAdded(addedCategory);
-      setNewCategory({ name: '', description: '', imageUrl: '', dynamicFields: [] });
+      reset();
+      setImageUrl('');
+      setDynamicFields([]);
       showSnackbar(`Category "${addedCategory.name}" created successfully!`, 'success');
     } catch (error) {
       console.error('Error adding category:', error);
@@ -83,37 +89,30 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
     }
   };
 
+  const handleFormSubmit = handleSubmit(handleAddCategory);
+
   const addDynamicField = () => {
     const tempId = `temp_${Date.now()}_${Math.random()}`;
-    setNewCategory({
-      ...newCategory,
-      dynamicFields: [
-        ...newCategory.dynamicFields,
-        {
-          tempId,
-          fieldName: '',
-          fieldType: 'TEXT',
-          appliesTo: 'PRODUCT',
-          required: false
-        }
-      ]
-    });
+    setDynamicFields([
+      ...dynamicFields,
+      {
+        tempId,
+        fieldName: '',
+        fieldType: 'TEXT',
+        appliesTo: 'PRODUCT',
+        required: false
+      }
+    ]);
   };
 
   const removeDynamicField = (index: number) => {
-    setNewCategory({
-      ...newCategory,
-      dynamicFields: newCategory.dynamicFields.filter((_, i) => i !== index)
-    });
+    setDynamicFields(dynamicFields.filter((_, i) => i !== index));
   };
 
   const updateDynamicField = (index: number, field: Partial<Omit<CategoryDynamicField, 'id'>>) => {
-    const updatedFields = [...newCategory.dynamicFields];
+    const updatedFields = [...dynamicFields];
     updatedFields[index] = { ...updatedFields[index], ...field };
-    setNewCategory({
-      ...newCategory,
-      dynamicFields: updatedFields
-    });
+    setDynamicFields(updatedFields);
   };
 
   return (
@@ -145,7 +144,7 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
         </div>
       )}
       
-      <form onSubmit={handleAddCategory} className="p-6 pt-4">
+      <form onSubmit={handleFormSubmit} className="p-6 pt-4">
         {/* Basic Info Tab */}
         {activeTab === 'basic' && (
           <div className="space-y-6">
@@ -153,30 +152,30 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
               {/* Left Column - Form Fields */}
               <div className="space-y-4">
                 <TextField
-                  label="Category Name"
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                  label={t('categories.categoryName')}
+                  {...register('name')}
+                  error={errors.name?.message}
                   required
                   disabled={createCategory.isPending}
-                  placeholder="Enter category name"
+                  placeholder={t('categories.categoryNamePlaceholder')}
                 />
                 
                 <TextArea
-                  label="Description"
-                  value={newCategory.description}
-                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                  label={t('categories.description')}
+                  {...register('description')}
+                  error={errors.description?.message}
                   rows={4}
                   disabled={createCategory.isPending}
-                  placeholder="Describe this category..."
+                  placeholder={t('categories.categoryDescriptionPlaceholder')}
                 />
               </div>
 
               {/* Right Column - Image Upload */}
               <div>
                 <ImageUploadZone
-                  value={newCategory.imageUrl}
-                  label="Category Image"
-                  onChange={(imageUrl) => setNewCategory({ ...newCategory, imageUrl })}
+                  value={imageUrl}
+                  label={t('categories.categoryImage')}
+                  onChange={setImageUrl}
                   disabled={createCategory.isPending}
                 />
               </div>
@@ -201,13 +200,13 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
                 variant="filled"
                 hasIcon
                 icon="add"
-                label="Add Field"
+                label={t('categories.addField')}
                 onClick={addDynamicField}
                 disabled={createCategory.isPending}
               />
             </div>
 
-            {newCategory.dynamicFields.length === 0 ? (
+            {dynamicFields.length === 0 ? (
               <Card variant="outlined" className="text-center py-12">
                 <span className="mdi text-5xl mb-4 text-(--md-sys-color-on-surface-variant) block">
                   tune
@@ -223,14 +222,14 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
                   variant="filled"
                   hasIcon
                   icon="add"
-                  label="Add Your First Field"
+                  label={t('categories.addFirstField')}
                   onClick={addDynamicField}
                   disabled={createCategory.isPending}
                 />
               </Card>
             ) : (
               <div className="space-y-4">
-                {newCategory.dynamicFields.map((field, index) => {
+                {dynamicFields.map((field, index) => {
                   const fieldKey = field.tempId || `field_${index}`;
                   return (
                     <Card key={fieldKey} variant="outlined" className="p-4">
@@ -256,16 +255,16 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                       <TextField
-                        label="Field Name"
+                        label={t('categories.fieldName')}
                         value={field.fieldName}
                         onChange={(e) => updateDynamicField(index, { fieldName: e.target.value })}
-                        placeholder="e.g., Size, Color, Weight"
+                        placeholder={t('categories.dynamicFieldPlaceholder')}
                         disabled={createCategory.isPending}
                         required
                       />
                       
                       <Select
-                        label="Field Type"
+                        label={t('categories.fieldType')}
                         value={field.fieldType}
                         onChange={(value) => updateDynamicField(index, { 
                           fieldType: value as CategoryDynamicField['fieldType'] 
@@ -275,7 +274,7 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
                       />
 
                       <Select
-                        label="Applies To"
+                        label={t('categories.appliesTo')}
                         value={field.appliesTo}
                         onChange={(value) => updateDynamicField(index, { 
                           appliesTo: value as CategoryDynamicField['appliesTo'] 
@@ -288,7 +287,7 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
                         <Checkbox
                           checked={field.required}
                           onChange={(checked) => updateDynamicField(index, { required: checked })}
-                          label="Required field"
+                          label={t('categories.requiredField')}
                           disabled={createCategory.isPending}
                         />
                       </div>
@@ -307,7 +306,7 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
             type="submit"
             variant="filled"
             label={createCategory.isPending ? 'Creating...' : 'Create Category'}
-            disabled={createCategory.isPending || !newCategory.name.trim()}
+            disabled={createCategory.isPending || !watchedName?.trim()}
             hasIcon
             icon={createCategory.isPending ? undefined : "add"}
             className="flex-1 sm:flex-none"

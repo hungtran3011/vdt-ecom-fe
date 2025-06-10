@@ -9,6 +9,7 @@ import ProductCard from '@/components/ProductCard';
 import { List, ListItem } from '@/components/List';
 import TextField from '@/components/TextField';
 import Button from '@/components/Button';
+import { t } from '@/utils/localization';
 import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { Product } from '@/types/Product';
@@ -131,10 +132,10 @@ export default function ProductsPage() {
           {/* Search */}
           <div className="max-w-md mb-4">
             <TextField
-              label="Tìm kiếm sản phẩm"
+              label={t('common.searchProducts')}
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Nhập tên sản phẩm..."
+              placeholder={t('common.searchProductsPlaceholder')}
               leadingIcon="search"
             />
           </div>

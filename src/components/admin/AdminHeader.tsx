@@ -68,7 +68,7 @@ export default function AdminHeader() {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-(--md-sys-color-on-surface)">
-                {t('admin.dashboard')}
+                {t('admin.dashboard.title')}
               </h1>
               <span className="hidden sm:inline-block text-xs text-(--md-sys-color-on-surface-variant)">
                 {t('admin.managementPortal')}

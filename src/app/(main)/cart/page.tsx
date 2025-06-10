@@ -4,74 +4,183 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/Button';
-import { useCart, useRemoveFromCart, useUpdateCartItem, useClearCart } from '@/hooks/useCart';
+import { useCartContext } from '@/contexts/CartContext';
 import { formatVND } from '@/utils/currency';
+import { useSnackbar } from '@/hooks/useSnackbar';
+import { useProduct } from '@/hooks/useProducts';
+import { Product, ProductVariation } from '@/types/Product';
+
+// Component to render individual cart item with product details
+const CartItemWithDetails = ({ 
+  cartItem, 
+  onQuantityChange, 
+  onRemove 
+}: {
+  cartItem: {
+    productId: number;
+    variationId?: number;
+    quantity: number;
+    unitPrice: number;
+    addedAt: string;
+  };
+  onQuantityChange: (productId: number, variationId: number | undefined, quantity: number) => void;
+  onRemove: (productId: number, variationId: number | undefined) => void;
+}) => {
+  const { data: product, isLoading } = useProduct(cartItem.productId);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 animate-pulse">
+        <div className="flex gap-4">
+          <div className="w-24 h-24 bg-gray-200 rounded-lg"></div>
+          <div className="flex-1 space-y-2">
+            <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+        <div className="text-center text-gray-500">
+          <p>Sản phẩm không tồn tại</p>
+          <Button
+            variant="outlined"
+            onClick={() => onRemove(cartItem.productId, cartItem.variationId)}
+            className="mt-2 text-red-600 border-red-600"
+          >
+            Xóa
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const variation = product.variations?.find((v: ProductVariation) => v.id === cartItem.variationId);
+  const unitPrice = variation ? product.basePrice + variation.additionalPrice : product.basePrice;
+  const totalPrice = unitPrice * cartItem.quantity;
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+      <div className="flex gap-4">
+        {/* Product Image */}
+        <div className="w-24 h-24 flex-shrink-0">
+          <Image
+            src={product.images?.[0] || '/placeholder-product.png'}
+            alt={product.name}
+            width={96}
+            height={96}
+            className="w-full h-full object-cover rounded-lg"
+          />
+        </div>
+        
+        {/* Product Details */}
+        <div className="flex-1">
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {product.name}
+              </h3>
+              {variation && (
+                <p className="text-sm text-gray-600">
+                  Loại: {variation.name}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => onRemove(cartItem.productId, cartItem.variationId)}
+              className="text-red-500 hover:text-red-700 p-1"
+            >
+              <span className="mdi w-5 h-5">close</span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            {/* Quantity Controls */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onQuantityChange(cartItem.productId, cartItem.variationId, cartItem.quantity - 1)}
+                disabled={cartItem.quantity <= 1}
+                className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="mdi w-4 h-4">remove</span>
+              </button>
+              <span className="text-lg font-medium w-8 text-center">
+                {cartItem.quantity}
+              </span>
+              <button
+                onClick={() => onQuantityChange(cartItem.productId, cartItem.variationId, cartItem.quantity + 1)}
+                className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="mdi w-4 h-4">add</span>
+              </button>
+            </div>
+
+            {/* Price */}
+            <div className="text-right">
+              <div className="text-lg font-semibold text-blue-600">
+                {formatVND(totalPrice)}
+              </div>
+              <div className="text-sm text-gray-500">
+                {formatVND(unitPrice)} × {cartItem.quantity}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CartPage = () => {
-  const { data: cart, isLoading, error } = useCart();
-  const removeFromCart = useRemoveFromCart();
-  const updateCartItem = useUpdateCartItem();
-  const clearCart = useClearCart();
+  const { 
+    cart, 
+    updateQuantity, 
+    removeFromCart, 
+    clearCart, 
+    getCartTotal 
+  } = useCartContext();
+  const { showSnackbar } = useSnackbar();
 
-  const handleQuantityChange = (cartItemId: string, newQuantity: number) => {
-    if (newQuantity === 0) {
-      removeFromCart.mutate(cartItemId);
-    } else {
-      updateCartItem.mutate({ cartItemId, quantity: newQuantity });
+  const handleQuantityChange = (productId: number, variationId: number | undefined, newQuantity: number) => {
+    try {
+      updateQuantity(productId, variationId, newQuantity);
+      if (newQuantity === 0) {
+        showSnackbar('Đã xóa sản phẩm khỏi giỏ hàng', 'success');
+      }
+    } catch (error) {
+      console.error('Error updating cart item:', error);
+      showSnackbar('Không thể cập nhật giỏ hàng', 'error');
+    }
+  };
+
+  const handleRemoveItem = (productId: number, variationId: number | undefined) => {
+    try {
+      removeFromCart(productId, variationId);
+      showSnackbar('Đã xóa sản phẩm khỏi giỏ hàng', 'success');
+    } catch (error) {
+      console.error('Error removing item:', error);
+      showSnackbar('Không thể xóa sản phẩm', 'error');
     }
   };
 
   const handleClearCart = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm trong giỏ hàng?')) {
-      clearCart.mutate();
+      try {
+        clearCart();
+        showSnackbar('Đã xóa tất cả sản phẩm khỏi giỏ hàng', 'success');
+      } catch (error) {
+        console.error('Error clearing cart:', error);
+        showSnackbar('Không thể xóa giỏ hàng', 'error');
+      }
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-lg shadow p-6">
-                  <div className="flex gap-4">
-                    <div className="w-24 h-24 bg-gray-200 rounded"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-red-800 mb-2">Có lỗi xảy ra</h2>
-            <p className="text-red-600 mb-4">Không thể tải thông tin giỏ hàng. Vui lòng thử lại sau.</p>
-            <Button 
-              variant="filled" 
-              onClick={() => window.location.reload()}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Thử lại
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -112,77 +221,13 @@ const CartPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cart.items.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                <div className="flex gap-4">
-                  {/* Product Image */}
-                  <div className="w-24 h-24 flex-shrink-0">
-                    <Image
-                      src={item.product.images?.[0] || '/placeholder-product.png'}
-                      alt={item.product.name}
-                      width={96}
-                      height={96}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  </div>
-                  
-                  {/* Product Details */}
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {item.product.name}
-                        </h3>
-                        {item.variation && (
-                          <p className="text-sm text-gray-600">
-                            Loại: {item.variation.name}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => removeFromCart.mutate(item.id)}
-                        className="text-red-500 hover:text-red-700 p-1"
-                        disabled={removeFromCart.isPending}
-                      >
-                        <span className="mdi w-5 h-5">close</span>
-                      </button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                          disabled={updateCartItem.isPending || item.quantity <= 1}
-                          className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <span className="mdi w-4 h-4">remove</span>
-                        </button>
-                        <span className="text-lg font-medium w-8 text-center">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                          disabled={updateCartItem.isPending}
-                          className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <span className="mdi w-4 h-4">add</span>
-                        </button>
-                      </div>
-                      
-                      {/* Price */}
-                      <div className="text-right">
-                        <div className="text-lg font-semibold text-blue-600">
-                          {formatVND(item.totalPrice)}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {formatVND(item.price)} × {item.quantity}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {cart.items.map((cartItem) => (
+              <CartItemWithDetails
+                key={`${cartItem.productId}-${cartItem.variationId || 'no-variation'}`}
+                cartItem={cartItem}
+                onQuantityChange={handleQuantityChange}
+                onRemove={handleRemoveItem}
+              />
             ))}
           </div>
 
@@ -193,8 +238,8 @@ const CartPage = () => {
               
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Tạm tính ({cart.totalItems} sản phẩm):</span>
-                  <span className="font-medium">{formatVND(cart.totalPrice)}</span>
+                  <span className="text-gray-600">Tạm tính ({cart.items.length} sản phẩm):</span>
+                  <span className="font-medium">{formatVND(getCartTotal())}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Phí vận chuyển:</span>
@@ -207,7 +252,7 @@ const CartPage = () => {
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Tổng cộng:</span>
-                    <span className="text-blue-600">{formatVND(cart.totalPrice)}</span>
+                    <span className="text-blue-600">{formatVND(getCartTotal())}</span>
                   </div>
                 </div>
               </div>

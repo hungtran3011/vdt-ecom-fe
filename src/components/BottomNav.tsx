@@ -10,6 +10,7 @@ export interface NavItem {
   icon: string;
   badge?: boolean;
   badgeContent?: string;
+  absolutePathIndicate?: boolean
 }
 
 export interface BottomNavProps {
@@ -28,8 +29,8 @@ export default function BottomNav({ items, className }: BottomNavProps) {
     )}>
       <div className="flex justify-around h-20">
         {items.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          
+          const isActive = item.absolutePathIndicate ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
           return (
             <Link 
               key={item.href} 

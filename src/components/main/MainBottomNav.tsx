@@ -1,14 +1,14 @@
 'use client';
 
 import BottomNav, { NavItem } from '@/components/BottomNav';
-import { useCart } from '@/hooks/useCart';
+import { useCartContext } from '@/contexts/CartContext';
 
 /**
  * Bottom navigation for the main user pages
  * Following Material Design v3 navigation bar guidelines
  */
 export default function MainBottomNav() {
-  const { data: cart } = useCart();
+  const { cart } = useCartContext();
   
   const navItems: NavItem[] = [
     {

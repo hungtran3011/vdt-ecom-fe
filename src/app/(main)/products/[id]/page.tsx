@@ -8,8 +8,8 @@ import Button from '@/components/Button';
 import IconButton from '@/components/IconButton';
 import Chip from '@/components/Chip';
 import { useProduct } from '@/hooks/useProducts';
-import { useAddToCart } from '@/hooks/useCart';
-import { Product, ProductVariation } from '@/types/Product';
+import { useCartContext } from '@/contexts/CartContext';
+import { ProductVariation } from '@/types/Product';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { cn } from '@/utils/cn';
 
@@ -17,6 +17,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const { addToCart } = useCartContext();
   
   const productId = parseInt(params.id as string);
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
@@ -25,21 +26,24 @@ export default function ProductDetailPage() {
 
   // Fetch product data
   const { data: product, isLoading, error } = useProduct(productId);
-  const addToCartMutation = useAddToCart();
 
   const currentPrice = selectedVariation 
-    ? product?.basePrice + selectedVariation.additionalPrice 
+    ? (product?.basePrice || 0) + selectedVariation.additionalPrice 
     : product?.basePrice || 0;
 
-  const handleAddToCart = async () => {
-    if (!product) return;
+  const handleAddToCart = () => {
+    if (!product) {
+      showSnackbar('Không thể thêm sản phẩm vào giỏ hàng', 'error');
+      return;
+    }
 
     try {
-      await addToCartMutation.mutateAsync({
-        productId: product.id,
-        variationId: selectedVariation?.id,
-        quantity
-      });
+      addToCart(
+        product.id,
+        selectedVariation?.id,
+        quantity,
+        currentPrice
+      );
       
       showSnackbar('Đã thêm sản phẩm vào giỏ hàng', 'success');
     } catch (err) {
@@ -95,9 +99,9 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-(--md-sys-color-background)">
-      <div className="max-w-6xl mx-auto p-4">
+      <div className="max-w-6xl mx-auto p-3">
         {/* Navigation */}
-        <div className="flex items-center gap-2 mb-6 text-(--md-sys-color-on-surface-variant)">
+        <div className="flex items-center gap-2 mb-4 text-(--md-sys-color-on-surface-variant)">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-1 hover:text-(--md-sys-color-on-surface) transition-colors"
@@ -116,9 +120,9 @@ export default function ProductDetailPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Product Images */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Main Image */}
             <Card className="overflow-hidden">
               <div className="aspect-square bg-(--md-sys-color-surface-container-highest) relative">
@@ -147,7 +151,7 @@ export default function ProductDetailPage() {
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
                     className={cn(
-                      "flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors",
+                      "flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors",
                       selectedImageIndex === index 
                         ? "border-(--md-sys-color-primary)" 
                         : "border-(--md-sys-color-outline-variant)"
@@ -156,8 +160,8 @@ export default function ProductDetailPage() {
                     <Image
                       src={image}
                       alt={`${product.name} ${index + 1}`}
-                      width={80}
-                      height={80}
+                      width={64}
+                      height={64}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -167,9 +171,9 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Product Info */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <h1 className="text-3xl font-bold text-(--md-sys-color-on-surface) mb-2">
+              <h1 className="text-2xl font-bold text-(--md-sys-color-on-surface) mb-2">
                 {product.name}
               </h1>
               
@@ -178,16 +182,16 @@ export default function ProductDetailPage() {
                   variant="assist"
                   color="secondary"
                   label={product.category.name}
-                  className="mb-4"
+                  className="mb-3"
                 />
               )}
 
-              <div className="text-2xl font-bold text-(--md-sys-color-primary) mb-4">
+              <div className="text-xl font-bold text-(--md-sys-color-primary) mb-3">
                 {currentPrice.toLocaleString('vi-VN')}₫
               </div>
 
               {product.description && (
-                <p className="text-(--md-sys-color-on-surface-variant) leading-relaxed">
+                <p className="text-(--md-sys-color-on-surface-variant) text-sm leading-relaxed">
                   {product.description}
                 </p>
               )}
@@ -196,7 +200,7 @@ export default function ProductDetailPage() {
             {/* Variations */}
             {product.variations && product.variations.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-(--md-sys-color-on-surface) mb-3">
+                <h3 className="text-lg font-semibold text-(--md-sys-color-on-surface) mb-2">
                   Lựa chọn
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
@@ -207,16 +211,16 @@ export default function ProductDetailPage() {
                         selectedVariation?.id === variation.id ? null : variation
                       )}
                       className={cn(
-                        "p-3 rounded-lg border-2 text-left transition-colors",
+                        "p-2 rounded-lg border-2 text-left transition-colors",
                         selectedVariation?.id === variation.id
                           ? "border-(--md-sys-color-primary) bg-(--md-sys-color-primary-container)"
                           : "border-(--md-sys-color-outline-variant) hover:border-(--md-sys-color-outline)"
                       )}
                     >
-                      <div className="font-medium text-(--md-sys-color-on-surface)">
+                      <div className="font-medium text-(--md-sys-color-on-surface) text-sm">
                         {variation.name}
                       </div>
-                      <div className="text-sm text-(--md-sys-color-on-surface-variant)">
+                      <div className="text-xs text-(--md-sys-color-on-surface-variant)">
                         +{variation.additionalPrice.toLocaleString('vi-VN')}₫
                       </div>
                     </button>
@@ -227,7 +231,7 @@ export default function ProductDetailPage() {
 
             {/* Quantity Selector */}
             <div>
-              <h3 className="text-lg font-semibold text-(--md-sys-color-on-surface) mb-3">
+              <h3 className="text-lg font-semibold text-(--md-sys-color-on-surface) mb-2">
                 Số lượng
               </h3>
               <div className="flex items-center gap-3">
@@ -247,18 +251,17 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Add to Cart */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Button
                 variant="filled"
                 label={`Thêm vào giỏ hàng - ${(currentPrice * quantity).toLocaleString('vi-VN')}₫`}
                 onClick={handleAddToCart}
-                disabled={addToCartMutation.isPending}
                 hasIcon
                 icon="shopping_cart"
                 className="w-full"
               />
               
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <Button
                   variant="outlined"
                   label="Mua ngay"
@@ -266,7 +269,6 @@ export default function ProductDetailPage() {
                     handleAddToCart();
                     router.push('/cart');
                   }}
-                  disabled={addToCartMutation.isPending}
                   hasIcon
                   icon="flash_on"
                   className="flex-1"
@@ -279,12 +281,22 @@ export default function ProductDetailPage() {
                 
                 <IconButton
                   icon="share"
-                  onClick={() => {
-                    navigator.share?.({
-                      title: product.name,
-                      text: product.description,
-                      url: window.location.href
-                    }) || showSnackbar('Đã sao chép liên kết', 'success');
+                  onClick={async () => {
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: product.name,
+                          text: product.description,
+                          url: window.location.href
+                        });
+                      } catch {
+                        // User cancelled sharing
+                      }
+                    } else {
+                      // Fallback: copy to clipboard
+                      navigator.clipboard?.writeText(window.location.href);
+                      showSnackbar('Đã sao chép liên kết', 'success');
+                    }
                   }}
                 />
               </div>
@@ -292,12 +304,12 @@ export default function ProductDetailPage() {
 
             {/* Product Features */}
             <Card variant="outlined">
-              <div className="p-4 space-y-3">
-                <h3 className="font-semibold text-(--md-sys-color-on-surface)">
+              <div className="p-3 space-y-2">
+                <h3 className="font-semibold text-(--md-sys-color-on-surface) text-sm">
                   Thông tin sản phẩm
                 </h3>
                 
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1 text-xs">
                   <div className="flex items-center gap-2">
                     <span className="mdi text-(--md-sys-color-primary)">verified</span>
                     <span className="text-(--md-sys-color-on-surface-variant)">

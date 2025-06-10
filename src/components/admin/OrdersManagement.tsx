@@ -448,18 +448,18 @@ export default function OrdersManagement({
           <div className="p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               <TextField
-                label="Search orders"
+                label={t('orders.searchOrders')}
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                placeholder="Search by order ID or customer..."
+                placeholder={t('orders.searchOrdersPlaceholder')}
               />
               
               <Select
-                label="Status"
+                label={t('common.status')}
                 value={filters.status.toString()}
                 onChange={(value) => setFilters(prev => ({ ...prev, status: value as OrderStatus | '' }))}
                 options={[
-                  { value: '', label: 'All Statuses' },
+                  { value: '', label: t('orders.allStatuses') },
                   ...Object.entries(OrderStatusLabels).map(([value, label]) => ({
                     value,
                     label
@@ -468,11 +468,11 @@ export default function OrdersManagement({
               />
               
               <Select
-                label="Payment Method"
+                label={t('orders.paymentMethod')}
                 value={filters.paymentMethod.toString()}
                 onChange={(value) => setFilters(prev => ({ ...prev, paymentMethod: value as PaymentMethod | '' }))}
                 options={[
-                  { value: '', label: 'All Methods' },
+                  { value: '', label: t('orders.allPaymentMethods') },
                   ...Object.entries(PaymentMethodLabels).map(([value, label]) => ({
                     value,
                     label
@@ -481,11 +481,11 @@ export default function OrdersManagement({
               />
               
               <Select
-                label="Payment Status"
+                label={t('orders.paymentStatus')}
                 value={filters.paymentStatus.toString()}
                 onChange={(value) => setFilters(prev => ({ ...prev, paymentStatus: value as PaymentStatus | '' }))}
                 options={[
-                  { value: '', label: 'All Payment Status' },
+                  { value: '', label: t('orders.allPaymentStatuses') },
                   { value: PaymentStatus.PENDING.toString(), label: 'Pending' },
                   { value: PaymentStatus.SUCCESSFUL.toString(), label: 'Successful' },
                   { value: PaymentStatus.FAILED.toString(), label: 'Failed' }
@@ -493,14 +493,14 @@ export default function OrdersManagement({
               />
               
               <TextField
-                label="From Date"
+                label={t('orders.dateFrom')}
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
               />
               
               <TextField
-                label="To Date"
+                label={t('orders.dateTo')}
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
@@ -519,7 +519,7 @@ export default function OrdersManagement({
             <Button 
               variant="filled"
               onClick={() => refetch()}
-              label="Retry"
+              label={t('actions.retry')}
               hasIcon
               icon="refresh"
             />
@@ -558,7 +558,7 @@ export default function OrdersManagement({
                         variant="text"
                         hasIcon
                         icon="visibility"
-                        label="View"
+                        label={t('actions.view')}
                         onClick={() => handleOrderClick(order)}
                       />
                     )}

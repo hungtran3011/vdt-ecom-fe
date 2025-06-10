@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Card from '@/components/Card';
 import { List, ListItem } from '@/components/List';
@@ -9,23 +9,15 @@ import Button from '@/components/Button';
 import TextField from '@/components/TextField';
 import Snackbar from '@/components/Snackbar';
 import Pagination from '@/components/Pagination';
-import ImageUploadZone from '@/components/ImageUploadZone';
-import { Product, CreateProductRequest, UpdateProductRequest } from '@/types/Product';
+import AddProductForm from './AddProductForm';
+import EditProductForm from './EditProductForm';
+import { Product } from '@/types/Product';
 import { useProducts, useDeleteProduct } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { usePagination } from '@/hooks/usePagination';
-import { productService } from '@/services/productService';
 import { formatVND } from '@/utils/currency';
 import { t } from '@/utils/localization';
-
-interface ProductFormData {
-  name: string;
-  description: string;
-  basePrice: number;
-  categoryId: number;
-  images: string[];
-}
 
 interface ProductsManagementProps {
   title?: string;
@@ -47,13 +39,6 @@ export default function ProductsManagement({
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [formData, setFormData] = useState<ProductFormData>({
-    name: '',
-    description: '',
-    basePrice: 0,
-    categoryId: 0,
-    images: []
-  });
 
   // Pagination state
   const pagination = usePagination();
@@ -73,86 +58,28 @@ export default function ProductsManagement({
     categoryId: selectedCategory || undefined
   });
   
-  const products = productsData?.data || [];
+  const products = productsData?.content || [];
   
   const { data: categoriesData } = useCategories();
-  const categories = categoriesData || [];
+  const categories = useMemo(() => categoriesData || [], [categoriesData]);
   
   const deleteProduct = useDeleteProduct();
   const { snackbar, showSnackbar, hideSnackbar } = useSnackbar();
 
-  // Form handlers
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      basePrice: 0,
-      categoryId: categories[0]?.id || 0,
-      images: []
-    });
+  // Form handlers for dedicated components
+  const handleProductAdded = (product: Product) => {
+    setIsAddingProduct(false);
+    refetch();
+    onProductUpdate?.(product);
   };
 
-  const handleCreateProduct = async () => {
-    try {
-      if (!formData.name.trim()) {
-        showSnackbar(t('form.validation.required'), 'error');
-        return;
-      }
-
-      const createRequest: CreateProductRequest = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        basePrice: formData.basePrice,
-        categoryId: formData.categoryId,
-        images: formData.images
-      };
-
-      const newProduct = await productService.createProduct(createRequest);
-      
-      showSnackbar(t('messages.success.created'), 'success');
-      setIsAddingProduct(false);
-      resetForm();
-      refetch();
-      onProductUpdate?.(newProduct);
-    } catch (error) {
-      console.error('Error creating product:', error);
-      showSnackbar(t('messages.error.general'), 'error');
-    }
-  };
-
-  const handleUpdateProduct = async () => {
-    if (!editingProduct) return;
-
-    try {
-      const updateRequest: UpdateProductRequest = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        basePrice: formData.basePrice,
-        categoryId: formData.categoryId,
-        images: formData.images
-      };
-
-      const updatedProduct = await productService.updateProduct(editingProduct.id, updateRequest);
-      
-      showSnackbar(t('messages.success.updated'), 'success');
-      setEditingProduct(null);
-      resetForm();
-      refetch();
-      onProductUpdate?.(updatedProduct);
-    } catch (error) {
-      console.error('Error updating product:', error);
-      showSnackbar(t('messages.error.general'), 'error');
-    }
+  const handleProductUpdated = (product: Product) => {
+    setEditingProduct(null);
+    refetch();
+    onProductUpdate?.(product);
   };
 
   const handleEditProduct = (product: Product) => {
-    setFormData({
-      name: product.name,
-      description: product.description || '',
-      basePrice: product.basePrice,
-      categoryId: product.categoryId || categories[0]?.id || 0,
-      images: product.images || []
-    });
     setEditingProduct(product);
   };
 
@@ -174,13 +101,6 @@ export default function ProductsManagement({
 
   const handleRefresh = () => {
     refetch();
-  };
-
-  const handleImageRemove = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
   };
 
   const getStockStatus = (): 'tertiary' | 'secondary' | 'error' => {
@@ -221,121 +141,6 @@ export default function ProductsManagement({
       </div>
     );
   }
-
-  // Product form component
-  const ProductForm = ({ isEditing }: { isEditing: boolean }) => (
-    <Card variant="elevated" className="mb-6 p-6">
-      <h3 className="text-lg font-semibold text-(--md-sys-color-on-surface) mb-4">
-        {isEditing ? t('products.editProduct') : t('products.addProduct')}
-      </h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <TextField
-          label={t('products.productName')}
-          value={formData.name}
-          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-          placeholder={t('form.placeholder.name')}
-          required
-        />
-        
-        <div>
-          <label className="block text-sm font-medium text-(--md-sys-color-on-surface) mb-1">
-            {t('form.category')}
-          </label>
-          <select
-            value={formData.categoryId}
-            onChange={(e) => setFormData(prev => ({ ...prev, categoryId: parseInt(e.target.value) }))}
-            className="w-full p-3 border border-(--md-sys-color-outline) rounded-lg bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) focus:border-(--md-sys-color-primary) focus:outline-none"
-          >
-            <option value={0}>{t('products.allCategories')}</option>              {categories.map((category: { id: number; name: string }) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="mb-4">
-        <TextField
-          label={t('products.productDescription')}
-          value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          placeholder={t('form.placeholder.description')}
-        />
-      </div>
-
-      <div className="mb-4">
-        <TextField
-          label={t('products.basePrice')}
-          type="number"
-          value={formData.basePrice.toString()}
-          onChange={(e) => setFormData(prev => ({ ...prev, basePrice: parseFloat(e.target.value) || 0 }))}
-          placeholder={t('form.placeholder.price')}
-          required
-        />
-      </div>
-
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-(--md-sys-color-on-surface) mb-2">
-          {t('products.images')}
-        </label>
-        <ImageUploadZone
-          value=""
-          onChange={(imageUrl: string) => {
-            setFormData(prev => ({
-              ...prev,
-              images: [...prev.images, imageUrl]
-            }));
-          }}
-          label={t('products.uploadImages')}
-        />
-        
-        {formData.images.length > 0 && (
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-2 mt-4">
-            {formData.images.map((image, index) => (
-              <div key={index} className="relative">
-                <Image
-                  src={image}
-                  alt={`Product image ${index + 1}`}
-                  width={100}
-                  height={100}
-                  className="w-full h-20 object-cover rounded-lg"
-                />
-                <button
-                  onClick={() => handleImageRemove(index)}
-                  className="absolute -top-2 -right-2 bg-(--md-sys-color-error) text-(--md-sys-color-on-error) rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-(--md-sys-color-error-container) transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="flex gap-2 justify-end">
-        <Button
-          variant="outlined"
-          label={t('actions.cancel')}
-          onClick={() => {
-            if (isEditing) {
-              setEditingProduct(null);
-            } else {
-              setIsAddingProduct(false);
-            }
-            resetForm();
-          }}
-        />
-        <Button
-          variant="filled"
-          label={isEditing ? t('actions.update') : t('actions.create')}
-          onClick={isEditing ? handleUpdateProduct : handleCreateProduct}
-          disabled={!formData.name.trim() || formData.basePrice <= 0}
-        />
-      </div>
-    </Card>
-  );
 
   return (
     <div className={className}>
@@ -407,10 +212,21 @@ export default function ProductsManagement({
       </Card>
 
       {/* Add Product Form */}
-      {isAddingProduct && <ProductForm isEditing={false} />}
+      {isAddingProduct && (
+        <AddProductForm
+          onCancel={() => setIsAddingProduct(false)}
+          onProductAdded={handleProductAdded}
+        />
+      )}
 
       {/* Edit Product Form */}
-      {editingProduct && <ProductForm isEditing={true} />}
+      {editingProduct && (
+        <EditProductForm
+          product={editingProduct}
+          onCancel={() => setEditingProduct(null)}
+          onProductUpdated={handleProductUpdated}
+        />
+      )}
       
       {/* Products List */}
       {isError ? (

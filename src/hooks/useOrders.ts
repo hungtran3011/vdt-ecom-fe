@@ -36,6 +36,11 @@ export const useOrder = (orderId: string) => {
 };
 
 /**
+ * Alias for useOrder for consistency
+ */
+export const useOrderById = useOrder;
+
+/**
  * Custom hook for creating an order
  */
 export const useCreateOrder = () => {
@@ -82,6 +87,24 @@ export const useDeleteOrder = () => {
       queryClient.removeQueries({ queryKey: ['orders', orderId] });
       // Invalidate the orders list
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+};
+
+/**
+ * Custom hook for reordering an order
+ */
+export const useReorderOrder = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (orderId: string) => orderService.reorderOrder(orderId),
+    onSuccess: (newOrder) => {
+      // Invalidate the orders list to show the new order
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      
+      // Cache the new order
+      queryClient.setQueryData(['orders', newOrder.id], newOrder);
     },
   });
 };
@@ -136,7 +159,21 @@ export const useExportOrders = () => {
       paymentMethod?: string;
       dateFrom?: string;
       dateTo?: string;
+      // Legacy parameter names for backwards compatibility
+      startDate?: string;
+      endDate?: string;
     }) => orderService.exportOrders(filters),
+    onSuccess: (blob) => {
+      // Create a download link for the CSV file
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `orders_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    }
   });
 };
 

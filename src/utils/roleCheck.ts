@@ -1,5 +1,4 @@
 import { Session } from 'next-auth';
-import { debugSession } from './debugAuth';
 
 export function hasRole(session: Session | null, role: string): boolean {
   if (!session?.user?.roles) {
@@ -17,8 +16,6 @@ export function hasRole(session: Session | null, role: string): boolean {
 }
 
 export function isAdmin(session: Session | null): boolean {
-  debugSession(session, 'isAdmin check');
-  
   if (!session?.user?.roles) {
     console.log('❌ isAdmin - no roles found, returning false');
     return false;

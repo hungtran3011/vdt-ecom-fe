@@ -5,6 +5,7 @@ import Button from '@/components/Button';
 import IconButton from '@/components/IconButton';
 import Select from '@/components/Select';
 import { PaginationInfo, PaginationControls, PAGE_SIZE_OPTIONS } from '@/types/Pagination';
+import { t } from '@/utils/localization';
 
 interface PaginationProps {
   paginationInfo: PaginationInfo;
@@ -97,7 +98,7 @@ export default function Pagination({
               Items per page:
             </span>
             <Select
-              label="Page size"
+              label={t('pagination.pageSize')}
               value={pageSize.toString()}
               onChange={(value) => setPageSize(parseInt(value))}
               options={PAGE_SIZE_OPTIONS.map(size => ({
@@ -121,7 +122,7 @@ export default function Pagination({
             disabled={disabled || !hasPrevious}
             variant="standard"
             size="small"
-            aria-label="Go to first page"
+            aria-label={t('pagination.firstPage')}
           />
         )}
 
@@ -132,7 +133,7 @@ export default function Pagination({
           disabled={disabled || !hasPrevious}
           variant="standard"
           size="small"
-          aria-label="Go to previous page"
+          aria-label={t('pagination.previousPage')}
         />
 
         {/* Page number buttons */}
@@ -172,7 +173,7 @@ export default function Pagination({
           disabled={disabled || !hasNext}
           variant="standard"
           size="small"
-          aria-label="Go to next page"
+          aria-label={t('pagination.nextPage')}
         />
 
         {/* Last page button */}
@@ -183,7 +184,7 @@ export default function Pagination({
             disabled={disabled || !hasNext}
             variant="standard"
             size="small"
-            aria-label="Go to last page"
+            aria-label={t('pagination.lastPage')}
           />
         )}
       </div>
