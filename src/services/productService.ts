@@ -174,7 +174,7 @@ export class ProductService {
   }
 
   /**
-   * Filter products with advanced search criteria
+   * Filter products with advanced search criteria using backend's filter endpoint
    * @param filterParams Filter and pagination parameters
    * @returns Promise with filtered and paginated product data
    */
@@ -183,6 +183,7 @@ export class ProductService {
     size?: number;
     cursor?: string | number;
     name?: string;
+    description?: string;
     categoryId?: number;
     minPrice?: number;
     maxPrice?: number;
@@ -190,15 +191,22 @@ export class ProductService {
     sortDirection?: 'ASC' | 'DESC';
     startDate?: string;
     endDate?: string;
+    dynamicFields?: Array<{
+      fieldName: string;
+      value: string;
+      matchType: 'EQUALS' | 'CONTAINS' | 'STARTS_WITH' | 'ENDS_WITH';
+    }>;
   }) {
     try {
-      const queryParams = {
+      const requestBody = {
         page: 0,
         size: 10,
+        sortBy: 'NAME',
+        sortDirection: 'ASC',
         ...filterParams
       };
       
-      const response = await api.post('/v1/products/filter/search', queryParams);
+      const response = await api.post('/v1/products/filter/search', requestBody);
       
       return response.data;
     } catch (error) {
@@ -253,7 +261,7 @@ export class ProductService {
   }
 
   /**
-   * Search for products
+   * Search for products using backend's comprehensive filter endpoint
    * @param params Search and pagination parameters
    * @returns Promise with paginated product data
    */
@@ -264,19 +272,58 @@ export class ProductService {
     cursor?: string | number;
   }) {
     try {
-      const queryParams = {
-        page: 0,
-        size: 20,
-        ...params
+      const filterParams = {
+        name: params.query, // Use query as name filter
+        page: params.page || 0,
+        size: params.size || 20,
+        sortBy: 'NAME',
+        sortDirection: 'ASC'
       };
       
-      const response = await api.get('/v1/products/search', {
-        params: queryParams
-      });
+      const response = await api.post('/v1/products/filter/search', filterParams);
       
       return response.data;
     } catch (error) {
       console.error(`Error searching products with query "${params.query}":`, error);
+      throw error as ApiError;
+    }
+  }
+
+  /**
+   * Advanced product search using comprehensive filtering
+   * @param filterParams Advanced filter criteria
+   * @returns Promise with filtered and paginated product data
+   */
+  async advancedSearchProducts(filterParams: {
+    name?: string;
+    description?: string;
+    categoryId?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    sortDirection?: 'ASC' | 'DESC';
+    dynamicFields?: Array<{
+      fieldName: string;
+      value: string;
+      matchType: 'EQUALS' | 'CONTAINS' | 'STARTS_WITH' | 'ENDS_WITH';
+    }>;
+  }) {
+    try {
+      const requestBody = {
+        page: 0,
+        size: 20,
+        sortBy: 'NAME',
+        sortDirection: 'ASC',
+        ...filterParams
+      };
+      
+      const response = await api.post('/v1/products/filter/search', requestBody);
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error in advanced product search:', error);
       throw error as ApiError;
     }
   }

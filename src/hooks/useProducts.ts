@@ -49,16 +49,39 @@ export const useProductsByCategory = (categoryId: string | number, enabled = tru
 /**
  * Custom hook for searching products
  */
-export const useSearchProducts = (params: {
-  query: string;
+export const useSearchProducts = (query: string, enabled = false) => {
+  return useQuery({
+    queryKey: ['products', 'search', query],
+    queryFn: () => productService.searchProducts({ query }),
+    enabled: enabled && !!query && query.length > 2,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+  });
+};
+
+/**
+ * Custom hook for advanced product search with full filtering capabilities
+ */
+export const useAdvancedSearchProducts = (filterParams: {
+  name?: string;
+  description?: string;
+  categoryId?: number;
+  minPrice?: number;
+  maxPrice?: number;
   page?: number;
   size?: number;
-  cursor?: string | number;
-}, enabled = false) => {
+  sortBy?: string;
+  sortDirection?: 'ASC' | 'DESC';
+  dynamicFields?: Array<{
+    fieldName: string;
+    value: string;
+    matchType: 'EQUALS' | 'CONTAINS' | 'STARTS_WITH' | 'ENDS_WITH';
+  }>;
+}, enabled = true) => {
   return useQuery({
-    queryKey: ['products', 'search', params],
-    queryFn: () => productService.searchProducts(params),
-    enabled: enabled && !!params.query && params.query.length > 2,
+    queryKey: ['products', 'advancedSearch', filterParams],
+    queryFn: () => productService.advancedSearchProducts(filterParams),
+    enabled: enabled,
+    staleTime: 5 * 60 * 1000,
   });
 };
 
@@ -151,6 +174,7 @@ export const useFilterProducts = (filterParams: {
   size?: number;
   cursor?: string | number;
   name?: string;
+  description?: string;
   categoryId?: number;
   minPrice?: number;
   maxPrice?: number;
@@ -158,10 +182,16 @@ export const useFilterProducts = (filterParams: {
   sortDirection?: 'ASC' | 'DESC';
   startDate?: string;
   endDate?: string;
+  dynamicFields?: Array<{
+    fieldName: string;
+    value: string;
+    matchType: 'EQUALS' | 'CONTAINS' | 'STARTS_WITH' | 'ENDS_WITH';
+  }>;
 }, enabled = true) => {
   return useQuery({
     queryKey: ['products', 'filter', filterParams],
     queryFn: () => productService.filterProducts(filterParams),
     enabled: enabled,
+    staleTime: 5 * 60 * 1000,
   });
 };

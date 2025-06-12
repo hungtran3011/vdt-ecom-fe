@@ -314,7 +314,7 @@ export default function AddCategoryForm({ onCancel, onCategoryAdded }: AddCatego
           <Button
             type="button"
             variant="outlined"
-            label="Cancel"
+            label={t('actions.cancel')}
             onClick={onCancel}
             disabled={createCategory.isPending}
             className="flex-1 sm:flex-none"

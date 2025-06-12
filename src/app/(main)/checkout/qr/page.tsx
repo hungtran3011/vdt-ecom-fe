@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Snackbar from '@/components/Snackbar';
-import { useCartContext } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/EnhancedCartContext';
 import paymentService from '@/services/paymentService';
 import { OrderService } from '@/services/orderService';
 import { formatVND } from '@/utils/currency';

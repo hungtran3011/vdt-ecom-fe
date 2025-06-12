@@ -269,6 +269,14 @@ export function useAdjustStock() {
 
 // Validation hooks
 
+// Validate product stock availability
+export function useValidateProductStock() {
+  return useMutation({
+    mutationFn: ({ productId, quantity }: { productId: number; quantity: number }) =>
+      stockService.validateProductStockAvailability(productId, quantity),
+  });
+}
+
 // Validate stock availability
 export function useValidateStock() {
   return useMutation({

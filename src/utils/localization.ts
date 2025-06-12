@@ -7,6 +7,8 @@
 export const VI_TRANSLATIONS = {
   // Common translations used across the app
   common: {
+    allMethods: "Tất cả phương thức",
+    allStatuses: "Tất cả trạng thái",
     loading: 'Đang tải...',
     error: 'Đã xảy ra lỗi',
     success: 'Thành công',
@@ -22,6 +24,7 @@ export const VI_TRANSLATIONS = {
     today: 'Hôm nay',
     yesterday: 'Hôm qua',
     tomorrow: 'Ngày mai',
+    updating: 'Đang cập nhật...',
     status: 'Trạng thái',
     active: 'Hoạt động',
     inactive: 'Không hoạt động',
@@ -92,7 +95,8 @@ export const VI_TRANSLATIONS = {
     addToCart: 'Thêm vào giỏ hàng',
     removeFromCart: 'Xóa khỏi giỏ hàng',
     buyNow: 'Mua ngay',
-    checkout: 'Thanh toán'
+    checkout: 'Thanh toán',
+    exportExcel: 'Xuất Excel',
   },
 
   // Pagination
@@ -157,16 +161,20 @@ export const VI_TRANSLATIONS = {
       positive: 'Phải là số dương',
       error: 'Lỗi xác thực'
     },
-    category: "Danh mục"
+    category: "Danh mục",
+    searchPlaceholder: 'Tìm kiếm',
+    allMethods: 'Tất cả phương thức',
+    allStatuses: 'Tất cả trạng thái',
+    status: 'Trạng thái',
   },
 
   // Admin sections
   sections: {
     dashboard: 'Bảng điều khiển',
-    productManagement: 'Quản lý sản phẩm',
-    categoryManagement: 'Quản lý danh mục',
+    productsManagement: 'Quản lý sản phẩm',
+    categoriesManagement: 'Quản lý danh mục',
     orderManagement: 'Quản lý đơn hàng',
-    userManagement: 'Quản lý người dùng',
+    usersManagement: 'Quản lý người dùng',
     stockManagement: 'Quản lý kho hàng',
     paymentManagement: 'Quản lý thanh toán',
     reportManagement: 'Quản lý báo cáo'
@@ -185,6 +193,7 @@ export const VI_TRANSLATIONS = {
 
   // Admin dashboard
   admin: {
+    ordersManagement: 'Quản lý đơn hàng',
     dashboard: {
       title: 'Bảng điều khiển quản trị',
       systemStatus: 'Trạng thái hệ thống',
@@ -202,11 +211,32 @@ export const VI_TRANSLATIONS = {
       lowStockItems: 'Sản phẩm sắp hết hàng',
       criticalAlerts: 'Cảnh báo nghiêm trọng',
       paymentSuccess: 'Thanh toán thành công',
-      totalPayments: 'Tổng thanh toán'
+      totalPayments: 'Tổng thanh toán',
+      soldCount: 'Số lượng bán',
+      overview: 'Tổng quan',
+      products: 'Sản phẩm',
+      orders: 'Tổng đơn hàng',
+      users: 'Người dùng',
+      performance: 'Tổng quan hiệu suất',
+      categories: 'Danh mục',
+      averagePrice: 'Giá trung bình',
+      addedToday: 'Đã thêm hôm nay',
+      addedThisWeek: 'Đã thêm tuần này',
+      addedThisMonth: 'Đã thêm tháng này',
     },
     managementPortal: 'Cổng quản lý',
     administrator: 'Quản trị viên',
-    // users: 'Người dùng',
+    analytics: {
+      totalOrders: 'Tổng đơn hàng',
+      totalRevenue: 'Tổng doanh thu',
+      pendingOrders: 'Đơn hàng chờ xử lý',
+      completedOrders: 'Đơn hàng hoàn thành'
+    },
+    errors: {
+      failedToLoadOrders: 'Không thể tải danh sách đơn hàng',
+      noOrdersFound: 'Không tìm thấy đơn hàng phù hợp với bộ lọc của bạn',
+      noOrdersAvailable: 'Chưa có đơn hàng nào'
+    }
   },
 
   // Statistics
@@ -220,6 +250,7 @@ export const VI_TRANSLATIONS = {
 
   // Messages
   messages: {
+    noPaymentsAvailable: 'Không có thanh toán nào',
     success: {
       productCreated: 'Sản phẩm đã được tạo thành công',
       productUpdated: 'Sản phẩm đã được cập nhật thành công',
@@ -228,6 +259,7 @@ export const VI_TRANSLATIONS = {
       categoryUpdated: 'Danh mục đã được cập nhật thành công',
       categoryDeleted: 'Danh mục đã được xóa thành công',
       orderUpdated: 'Đơn hàng đã được cập nhật thành công',
+      orderStatusUpdated: 'Trạng thái đơn hàng đã được cập nhật thành công',
       stockAdjustmentCompleted: 'Điều chỉnh kho hoàn thành thành công',
       stockCreated: 'Mặt hàng kho đã được tạo thành công',
       alertAcknowledged: 'Cảnh báo đã được xác nhận',
@@ -349,13 +381,17 @@ export const VI_TRANSLATIONS = {
     // Search and filtering
     searchProducts: 'Tìm sản phẩm',
     searchProductsPlaceholder: 'Tìm theo tên sản phẩm hoặc SKU...',
+    searchPlaceholder: 'Tìm theo tên sản phẩm hoặc SKU...',
     searchReference: 'Tìm tham chiếu',
     searchReferencePlaceholder: 'Tìm theo mã đơn hàng, mã tham chiếu...',
     startDate: 'Từ ngày',
+    
+    // Stock management specific
+    addStockItem: 'Thêm mặt hàng kho',
+    testStock: 'Kiểm tra kho',
     endDate: 'Đến ngày',
     
     // Add Stock Form
-    addStockItem: 'Thêm mặt hàng kho',
     addStockDescription: 'Thêm sản phẩm mới vào hệ thống quản lý kho',
     stockInfo: 'Thông tin kho',
     createStockItem: 'Tạo mặt hàng kho',
@@ -432,6 +468,8 @@ export const VI_TRANSLATIONS = {
     price: 'Giá',
     category: 'Danh mục',
     selectCategory: 'Chọn danh mục',
+    allProducts: 'Tất cả sản phẩm',
+    filterByProduct: 'Lọc theo sản phẩm',
     selectProduct: 'Chọn sản phẩm',
     productInfo: 'Thông tin sản phẩm',
     
@@ -510,6 +548,9 @@ export const VI_TRANSLATIONS = {
     addFirstField: 'Thêm trường đầu tiên',
     requiredField: 'Trường bắt buộc',
     noCategoriesAvailable: 'Chưa có danh mục nào',
+    noCategoriesFound: 'Không tìm thấy danh mục nào',
+    categoriesManagement: 'danh mục',
+    updateCategory: 'Cập nhật danh mục',
     failedToLoadCategories: 'Không thể tải danh sách danh mục',
     categoryDetails: 'Chi tiết danh mục',
     dynamicFields: 'Trường động',
@@ -524,15 +565,19 @@ export const VI_TRANSLATIONS = {
   // Order Management
   orders: {
     orderId: 'Mã đơn hàng',
+    order: 'Đơn hàng',
     customer: 'Khách hàng',
     total: 'Tổng tiền',
     orderDate: 'Ngày đặt',
     paymentMethod: 'Phương thức thanh toán',
     paymentStatus: 'Trạng thái thanh toán',
     shippingAddress: 'Địa chỉ giao hàng',
+    address: 'Địa chỉ',
     orderItems: 'Sản phẩm đặt hàng',
     updateStatus: 'Cập nhật trạng thái',
+    newStatus: 'Trạng thái mới',
     orderDetails: 'Chi tiết đơn hàng',
+    details: 'Chi tiết',
     searchOrders: 'Tìm đơn hàng',
     searchOrdersPlaceholder: 'Tìm theo mã đơn hàng, khách hàng...',
     allStatuses: 'Tất cả trạng thái',
@@ -542,10 +587,16 @@ export const VI_TRANSLATIONS = {
     dateTo: 'Đến ngày',
     orderTotal: 'Tổng đơn hàng',
     customerInfo: 'Thông tin khách hàng',
+    customerInformation: 'Thông tin khách hàng',
+    orderInformation: 'Thông tin đơn hàng',
+    paymentInformation: 'Thông tin thanh toán',
     totalOrders: "đơn hàng",
     phone: 'Số điện thoại',
     notes: 'Ghi chú',
     items: 'sản phẩm',
+    quantity: 'Số lượng',
+    created: 'Tạo lúc',
+    updated: 'Cập nhật lúc',
     noOrdersFound: 'Không tìm thấy đơn hàng nào',
     noOrdersAvailable: 'Chưa có đơn hàng nào',
     failedToLoadOrders: 'Không thể tải danh sách đơn hàng',
@@ -609,6 +660,42 @@ export const VI_TRANSLATIONS = {
 
   search: {
     hintedSearchText: 'Tìm kiếm theo tên, mô tả...'
+  },
+
+  payment: {
+    method: "Phương thức thanh toán",
+    searchPlaceholder: "Tìm phương thức thanh toán",
+  },
+
+  // Homepage translations
+  homepage: {
+    // Hero section
+    welcomeTitle: 'Chào mừng đến VDT Store',
+    welcomeDescription: 'Mua sắm online dễ dàng, giao hàng nhanh chóng',
+    promotionTitle: 'Khuyến mãi hấp dẫn',
+    promotionDescription: 'Giảm giá lên đến 50% cho nhiều sản phẩm',
+    qualityTitle: 'Sản phẩm chất lượng',
+    qualityDescription: 'Đảm bảo nguồn gốc, chất lượng cao',
+    
+    // Search section
+    searchPrompt: 'Hôm nay bạn muốn mua gì?',
+    
+    // Categories section
+    popularCategories: 'Danh mục phổ biến',
+    seeAllCategories: 'Xem tất cả',
+    
+    // Featured products section
+    featuredProducts: 'Sản phẩm nổi bật',
+    seeMoreProducts: 'Xem thêm',
+    
+    // Services section
+    ourServices: 'Dịch vụ của chúng tôi',
+    fastShipping: 'Giao hàng nhanh',
+    fastShippingDescription: 'Giao hàng trong ngày, miễn phí với đơn hàng từ 200k',
+    qualityGuarantee: 'Chất lượng đảm bảo',
+    qualityGuaranteeDescription: 'Sản phẩm chính hãng, có tem chứng nhận chất lượng',
+    support247: 'Hỗ trợ 24/7',
+    support247Description: 'Đội ngũ chăm sóc khách hàng luôn sẵn sàng hỗ trợ'
   }
 } as const;
 

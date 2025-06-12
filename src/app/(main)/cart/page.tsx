@@ -4,17 +4,22 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/Button';
-import { useCartContext } from '@/contexts/CartContext';
+import Card from '@/components/Card';
+import IconButton from '@/components/IconButton';
+import Chip from '@/components/Chip';
+import { useCartContext } from '@/contexts/EnhancedCartContext';
 import { formatVND } from '@/utils/currency';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { useProduct } from '@/hooks/useProducts';
-import { Product, ProductVariation } from '@/types/Product';
+import { ProductVariation } from '@/types/Product';
+import { t } from '@/utils/localization';
 
 // Component to render individual cart item with product details
 const CartItemWithDetails = ({ 
   cartItem, 
   onQuantityChange, 
-  onRemove 
+  onRemove,
+  onToggleSelection
 }: {
   cartItem: {
     productId: number;
@@ -22,41 +27,47 @@ const CartItemWithDetails = ({
     quantity: number;
     unitPrice: number;
     addedAt: string;
+    selected: boolean;
   };
   onQuantityChange: (productId: number, variationId: number | undefined, quantity: number) => void;
   onRemove: (productId: number, variationId: number | undefined) => void;
+  onToggleSelection: (productId: number, variationId: number | undefined) => void;
 }) => {
   const { data: product, isLoading } = useProduct(cartItem.productId);
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 animate-pulse">
+      <Card variant="elevated" className="p-4 md:p-6 animate-pulse">
         <div className="flex gap-4">
-          <div className="w-24 h-24 bg-gray-200 rounded-lg"></div>
-          <div className="flex-1 space-y-2">
-            <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="w-20 h-20 md:w-24 md:h-24 bg-(--md-sys-color-outline-variant) rounded-xl"></div>
+          <div className="flex-1 space-y-3">
+            <div className="h-5 bg-(--md-sys-color-outline-variant) rounded-full w-3/4"></div>
+            <div className="h-4 bg-(--md-sys-color-outline-variant) rounded-full w-1/2"></div>
+            <div className="h-4 bg-(--md-sys-color-outline-variant) rounded-full w-1/4"></div>
           </div>
         </div>
-      </div>
+      </Card>
     );
   }
 
   if (!product) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-        <div className="text-center text-gray-500">
-          <p>Sản phẩm không tồn tại</p>
+      <Card variant="outlined" className="p-4 md:p-6 border-2 border-(--md-sys-color-error-container)">
+        <div className="text-center">
+          <span className="mdi text-3xl text-(--md-sys-color-error) mb-3 block">error</span>
+          <p className="text-(--md-sys-color-error) font-medium mb-4">
+            Sản phẩm không tồn tại
+          </p>
           <Button
             variant="outlined"
+            label="Xóa khỏi giỏ hàng"
+            hasIcon
+            icon="delete"
             onClick={() => onRemove(cartItem.productId, cartItem.variationId)}
-            className="mt-2 text-red-600 border-red-600"
-          >
-            Xóa
-          </Button>
+            className="!border-(--md-sys-color-error) !text-(--md-sys-color-error)"
+          />
         </div>
-      </div>
+      </Card>
     );
   }
 
@@ -65,74 +76,107 @@ const CartItemWithDetails = ({
   const totalPrice = unitPrice * cartItem.quantity;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+    <Card variant="elevated" className={`p-4 md:p-6 hover:shadow-md transition-shadow ${!cartItem.selected ? 'opacity-60' : ''}`}>
       <div className="flex gap-4">
+        {/* Selection Checkbox */}
+        <div className="flex items-start pt-2">
+          <label className="inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={cartItem.selected}
+              onChange={() => onToggleSelection(cartItem.productId, cartItem.variationId)}
+              className="w-5 h-5 rounded border-2 border-(--md-sys-color-outline) 
+                         checked:bg-(--md-sys-color-primary) checked:border-(--md-sys-color-primary)
+                         focus:ring-2 focus:ring-(--md-sys-color-primary) focus:ring-offset-2
+                         text-(--md-sys-color-on-primary)"
+            />
+          </label>
+        </div>
+
         {/* Product Image */}
-        <div className="w-24 h-24 flex-shrink-0">
-          <Image
-            src={product.images?.[0] || '/placeholder-product.png'}
-            alt={product.name}
-            width={96}
-            height={96}
-            className="w-full h-full object-cover rounded-lg"
-          />
+        <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0">
+          <div className="w-full h-full rounded-xl overflow-hidden bg-(--md-sys-color-surface-container-highest)">
+            {product.images?.[0] ? (
+              <Image
+                src={product.images[0]}
+                alt={product.name}
+                width={96}
+                height={96}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="mdi text-2xl text-(--md-sys-color-on-surface-variant)">
+                  image
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Product Details */}
-        <div className="flex-1">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex-1 min-w-0 pr-2">
+              <h3 className="text-base md:text-lg font-medium text-(--md-sys-color-on-surface) line-clamp-2">
                 {product.name}
               </h3>
               {variation && (
-                <p className="text-sm text-gray-600">
-                  Loại: {variation.name}
-                </p>
+                <Chip
+                  variant="assist"
+                  color="secondary"
+                  label={variation.name}
+                  className="mt-2"
+                />
               )}
             </div>
-            <button
+            <IconButton
+              variant="standard"
+              icon="close"
               onClick={() => onRemove(cartItem.productId, cartItem.variationId)}
-              className="text-red-500 hover:text-red-700 p-1"
-            >
-              <span className="mdi w-5 h-5">close</span>
-            </button>
+              className="text-(--md-sys-color-error)"
+            />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             {/* Quantity Controls */}
-            <div className="flex items-center gap-3">
-              <button
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-(--md-sys-color-on-surface-variant) mr-2">
+                Số lượng:
+              </span>
+              <IconButton
+                variant="outlined"
+                icon="remove"
+                size="small"
                 onClick={() => onQuantityChange(cartItem.productId, cartItem.variationId, cartItem.quantity - 1)}
                 disabled={cartItem.quantity <= 1}
-                className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="mdi w-4 h-4">remove</span>
-              </button>
-              <span className="text-lg font-medium w-8 text-center">
-                {cartItem.quantity}
-              </span>
-              <button
+              />
+              <div className="min-w-[40px] text-center">
+                <span className="text-base font-medium text-(--md-sys-color-on-surface)">
+                  {cartItem.quantity}
+                </span>
+              </div>
+              <IconButton
+                variant="outlined"
+                icon="add"
+                size="small"
                 onClick={() => onQuantityChange(cartItem.productId, cartItem.variationId, cartItem.quantity + 1)}
-                className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="mdi w-4 h-4">add</span>
-              </button>
+              />
             </div>
 
             {/* Price */}
-            <div className="text-right">
-              <div className="text-lg font-semibold text-blue-600">
+            <div className="text-right sm:text-left">
+              <div className="text-lg font-semibold text-(--md-sys-color-primary)">
                 {formatVND(totalPrice)}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-(--md-sys-color-on-surface-variant)">
                 {formatVND(unitPrice)} × {cartItem.quantity}
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -142,7 +186,11 @@ const CartPage = () => {
     updateQuantity, 
     removeFromCart, 
     clearCart, 
-    getCartTotal 
+    getCartTotal,
+    toggleItemSelection,
+    selectAllItems,
+    getSelectedItemsCount,
+    getSelectedItemsTotal
   } = useCartContext();
   const { showSnackbar } = useSnackbar();
 
@@ -168,6 +216,25 @@ const CartPage = () => {
     }
   };
 
+  const handleToggleSelection = (productId: number, variationId: number | undefined) => {
+    try {
+      toggleItemSelection(productId, variationId);
+    } catch (error) {
+      console.error('Error toggling item selection:', error);
+      showSnackbar('Không thể cập nhật lựa chọn', 'error');
+    }
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    try {
+      selectAllItems(selected);
+      showSnackbar(selected ? 'Đã chọn tất cả sản phẩm' : 'Đã bỏ chọn tất cả sản phẩm', 'success');
+    } catch (error) {
+      console.error('Error selecting all items:', error);
+      showSnackbar('Không thể cập nhật lựa chọn', 'error');
+    }
+  };
+
   const handleClearCart = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm trong giỏ hàng?')) {
       try {
@@ -180,45 +247,124 @@ const CartPage = () => {
     }
   };
 
+  const allItemsSelected = cart.items.length > 0 && cart.items.every(item => item.selected);
+  const hasSelectedItems = getSelectedItemsCount() > 0;
+  const selectedProductsCount = cart.items.filter(item => item.selected).length;
 
-
+  // Empty cart state
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-white rounded-lg shadow-lg p-12">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-4xl text-gray-400">🛒</span>
+      <div className="min-h-screen bg-(--md-sys-color-background) px-4 py-8">
+        <div className="container mx-auto max-w-4xl">
+          <Card variant="elevated" className="text-center p-8 md:p-12">
+            <div className="w-24 h-24 mx-auto mb-6 bg-(--md-sys-color-surface-container-highest) rounded-full flex items-center justify-center">
+              <span className="mdi text-4xl text-(--md-sys-color-on-surface-variant)">
+                shopping_cart
+              </span>
             </div>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Giỏ hàng trống</h2>
-            <p className="text-gray-600 mb-8">Bạn chưa có sản phẩm nào trong giỏ hàng.</p>
-            <Link href="/categories">
-              <Button variant="filled" className="bg-blue-600 hover:bg-blue-700">
-                Tiếp tục mua sắm
-              </Button>
-            </Link>
-          </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-(--md-sys-color-on-surface) mb-4">
+              Giỏ hàng trống
+            </h2>
+            <p className="text-(--md-sys-color-on-surface-variant) mb-8 max-w-md mx-auto">
+              Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm tuyệt vời của chúng tôi!
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/categories">
+                <Button 
+                  variant="filled" 
+                  label="Khám phá danh mục"
+                  hasIcon
+                  icon="category"
+                  className="min-w-[200px]"
+                />
+              </Link>
+              <Link href="/products">
+                <Button 
+                  variant="outlined" 
+                  label="Xem tất cả sản phẩm"
+                  hasIcon
+                  icon="inventory_2"
+                  className="min-w-[200px]"
+                />
+              </Link>
+            </div>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-(--md-sys-color-background) px-4 py-6 md:py-8">
+      <div className="container mx-auto max-w-7xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Giỏ hàng của bạn</h1>
-          <Button 
-            variant="outlined" 
-            onClick={handleClearCart}
-            className="text-red-600 border-red-600 hover:bg-red-50"
-          >
-            Xóa tất cả
-          </Button>
-        </div>
+        <Card variant="filled" className="p-4 md:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-(--md-sys-color-on-surface) mb-2">
+                Giỏ hàng của bạn
+              </h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Chip
+                  variant="assist"
+                  color="primary"
+                  label={`${cart.items.length} sản phẩm`}
+                  selected
+                />
+                <span className="text-(--md-sys-color-on-surface-variant) text-sm">
+                  • Tổng: {formatVND(getCartTotal())}
+                </span>
+                {selectedProductsCount !== cart.items.length && (
+                  <span className="text-(--md-sys-color-primary) text-sm font-medium">
+                    • Đã chọn: {formatVND(getSelectedItemsTotal())}
+                  </span>
+                )}
+              </div>
+            </div>
+            <Button 
+              variant="outlined" 
+              label="Xóa tất cả"
+              hasIcon
+              icon="delete_sweep"
+              onClick={handleClearCart}
+              className="!border-(--md-sys-color-error) !text-(--md-sys-color-error) hover:!bg-(--md-sys-color-error-container)"
+            />
+          </div>
+        </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Select All Controls */}
+        <Card variant="outlined" className="p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={allItemsSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="w-5 h-5 rounded border-2 border-(--md-sys-color-outline) 
+                             checked:bg-(--md-sys-color-primary) checked:border-(--md-sys-color-primary)
+                             focus:ring-2 focus:ring-(--md-sys-color-primary) focus:ring-offset-2
+                             text-(--md-sys-color-on-primary)"
+                />
+                <span className="ml-2 text-(--md-sys-color-on-surface) font-medium">
+                  Chọn tất cả
+                </span>
+              </label>
+              <span className="text-(--md-sys-color-on-surface-variant) text-sm">
+                ({selectedProductsCount}/{cart.items.length} sản phẩm đã chọn)
+              </span>
+            </div>
+            {hasSelectedItems && (
+              <div className="flex items-center gap-2">
+                <span className="text-(--md-sys-color-primary) font-medium">
+                  Đã chọn: {formatVND(getSelectedItemsTotal())}
+                </span>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {cart.items.map((cartItem) => (
@@ -227,76 +373,127 @@ const CartPage = () => {
                 cartItem={cartItem}
                 onQuantityChange={handleQuantityChange}
                 onRemove={handleRemoveItem}
+                onToggleSelection={handleToggleSelection}
               />
             ))}
           </div>
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 sticky top-4">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Tóm tắt đơn hàng</h3>
+            <Card variant="elevated" className="p-6 sticky top-6">
+              <h3 className="text-xl font-semibold text-(--md-sys-color-on-surface) mb-6">
+                Tóm tắt đơn hàng
+              </h3>
               
               <div className="space-y-4 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tạm tính ({cart.items.length} sản phẩm):</span>
-                  <span className="font-medium">{formatVND(getCartTotal())}</span>
+                <div className="flex justify-between items-center py-2 bg-(--md-sys-color-primary-container) px-3 rounded-lg">
+                  <span className="text-(--md-sys-color-on-primary-container) font-medium">
+                    Đã chọn ({selectedProductsCount}/{cart.items.length} sản phẩm):
+                  </span>
+                  <span className="font-bold text-(--md-sys-color-on-primary-container)">
+                    {formatVND(getSelectedItemsTotal())}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Phí vận chuyển:</span>
-                  <span className="font-medium">Miễn phí</span>
+                
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-(--md-sys-color-on-surface-variant)">Phí vận chuyển:</span>
+                  <Chip
+                    variant="assist"
+                    color="tertiary"
+                    label="Miễn phí"
+                    selected
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Thuế:</span>
-                  <span className="font-medium">Đã bao gồm</span>
+                
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-(--md-sys-color-on-surface-variant)">Thuế:</span>
+                  <span className="font-medium text-(--md-sys-color-on-surface)">
+                    Đã bao gồm
+                  </span>
                 </div>
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>Tổng cộng:</span>
-                    <span className="text-blue-600">{formatVND(getCartTotal())}</span>
-                  </div>
+                
+                <hr className="border-(--md-sys-color-outline-variant)" />
+                
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-lg font-semibold text-(--md-sys-color-on-surface)">
+                    Tổng thanh toán:
+                  </span>
+                  <span className="text-xl font-bold text-(--md-sys-color-primary)">
+                    {formatVND(hasSelectedItems ? getSelectedItemsTotal() : getCartTotal())}
+                  </span>
                 </div>
               </div>
               
-              {/* Checkout Button */}
-              <Link href="/checkout" className="block w-full">
-                <Button 
-                  variant="filled" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold"
-                >
-                  Tiến hành thanh toán
-                </Button>
-              </Link>
-              
-              {/* Continue Shopping */}
-              <Link href="/categories" className="block w-full mt-4">
-                <Button 
-                  variant="outlined" 
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  Tiếp tục mua sắm
-                </Button>
-              </Link>
+              {/* Checkout Actions */}
+              <div className="space-y-3">
+                {!hasSelectedItems && (
+                  <Card variant="filled" className="p-3 !bg-(--md-sys-color-error-container) mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="mdi text-lg text-(--md-sys-color-on-error-container)">
+                        warning
+                      </span>
+                      <span className="text-sm text-(--md-sys-color-on-error-container)">
+                        Vui lòng chọn ít nhất một sản phẩm để thanh toán
+                      </span>
+                    </div>
+                  </Card>
+                )}
+
+                <Link href="/checkout" className="block w-full">
+                  <Button 
+                    variant="filled" 
+                    label={hasSelectedItems ? 
+                      `Thanh toán ${getSelectedItemsCount()} sản phẩm` : 
+                      "Tiến hành thanh toán"
+                    }
+                    hasIcon
+                    icon="payment"
+                    className="w-full"
+                    disabled={!hasSelectedItems}
+                  />
+                </Link>
+                
+                <Link href="/categories" className="block w-full">
+                  <Button 
+                    variant="outlined" 
+                    label="Tiếp tục mua sắm"
+                    hasIcon
+                    icon="arrow_back"
+                    className="w-full"
+                  />
+                </Link>
+              </div>
               
               {/* Security Info */}
-              <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                <div className="flex items-center gap-2 text-green-700">
-                  <span className="mdi w-5 h-5">security</span>
-                  <span className="text-sm font-medium">Thanh toán an toàn</span>
+              <Card variant="filled" className="mt-6 p-4 !bg-(--md-sys-color-tertiary-container)">
+                <div className="flex items-start gap-3">
+                  <span className="mdi text-xl text-(--md-sys-color-on-tertiary-container) mt-0.5">
+                    security
+                  </span>
+                  <div>
+                    <h4 className="font-medium text-(--md-sys-color-on-tertiary-container) mb-1">
+                      Thanh toán an toàn
+                    </h4>
+                    <p className="text-sm text-(--md-sys-color-on-tertiary-container) opacity-90">
+                      Thông tin của bạn được bảo mật với công nghệ mã hóa SSL 256-bit
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-green-600 mt-1">
-                  Thông tin của bạn được bảo mật với công nghệ mã hóa SSL
-                </p>
-              </div>
-            </div>
+              </Card>
+            </Card>
           </div>
         </div>
 
         {/* Breadcrumb */}
-        <div className="mt-8 text-sm text-gray-500">
-          <Link href="/" className="hover:text-gray-700">Trang chủ</Link>
-          <span className="mx-2">›</span>
-          <span>Giỏ hàng</span>
-        </div>
+        <Card variant="outlined" className="mt-8 p-4">
+          <div className="flex items-center gap-2 text-sm text-(--md-sys-color-on-surface-variant)">
+            <Link href="/" className="hover:text-(--md-sys-color-primary) transition-colors">
+              {t('navigation.home')}
+            </Link>
+            <span className="mdi text-sm">chevron_right</span>
+            <span className="text-(--md-sys-color-on-surface)">Giỏ hàng</span>
+          </div>
+        </Card>
       </div>
     </div>
   );

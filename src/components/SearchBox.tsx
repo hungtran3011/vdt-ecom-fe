@@ -106,7 +106,7 @@ export default function SearchBox({
           <div className="w-12 h-12 flex flex-col justify-center items-center">
             <div className="overflow-hidden rounded-full flex justify-center items-center">
               <button
-                onClick={value ? handleClear : handleSearch}
+                onClick={value ? handleSearch : undefined}
                 className="p-2 flex justify-center items-center hover:bg-(--md-state-layers-on-surface-opacity-016) hover:bg-opacity-8 rounded-full transition-colors"
               >
                 <div className="w-6 h-6 relative">

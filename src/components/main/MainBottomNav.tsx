@@ -1,7 +1,7 @@
 'use client';
 
 import BottomNav, { NavItem } from '@/components/BottomNav';
-import { useCartContext } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/EnhancedCartContext';
 
 /**
  * Bottom navigation for the main user pages

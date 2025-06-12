@@ -227,3 +227,114 @@ export const useClearCart = () => {
     },
   });
 };
+
+// JWT-based cart hooks (recommended for authenticated users)
+
+/**
+ * Custom hook for getting current user's cart
+ */
+export const useCurrentUserCart = () => {
+  return useQuery<CartDto, Error>({
+    queryKey: ['currentUserCart'],
+    queryFn: () => cartService.getCurrentUserCart(),
+    staleTime: 1 * 60 * 1000, // Consider data fresh for 1 minute
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  });
+};
+
+/**
+ * Custom hook for getting or creating current user's cart
+ */
+export const useGetOrCreateCurrentUserCart = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: () => cartService.getOrCreateCurrentUserCart(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserCart'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserCartItems'] });
+    },
+  });
+};
+
+/**
+ * Custom hook for getting current user's cart items
+ */
+export const useCurrentUserCartItems = (
+  page: number = 0, 
+  size: number = 10, 
+  cursor?: string
+) => {
+  return useQuery<CartItemsResponse, Error>({
+    queryKey: ['currentUserCartItems', page, size, cursor],
+    queryFn: () => cartService.getCurrentUserCartItems(page, size, cursor),
+    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
+    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
+  });
+};
+
+/**
+ * Custom hook for adding item to current user's cart
+ */
+export const useAddToCurrentUserCart = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (request: AddToCartRequest) => cartService.addItemToCurrentUserCart(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserCart'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserCartItems'] });
+    },
+  });
+};
+
+/**
+ * Custom hook for updating current user's cart item
+ */
+export const useUpdateCurrentUserCartItem = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ 
+      itemId, 
+      request 
+    }: { 
+      itemId: number; 
+      request: UpdateCartItemRequest;
+    }) => cartService.updateCurrentUserCartItem(itemId, request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserCart'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserCartItems'] });
+    },
+  });
+};
+
+/**
+ * Custom hook for removing item from current user's cart
+ */
+export const useRemoveFromCurrentUserCart = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (itemId: number) => cartService.removeItemFromCurrentUserCart(itemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserCart'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserCartItems'] });
+    },
+  });
+};
+
+/**
+ * Custom hook for clearing current user's cart
+ */
+export const useClearCurrentUserCart = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: () => cartService.clearCurrentUserCart(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserCart'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserCartItems'] });
+    },
+  });
+};

@@ -38,6 +38,14 @@ export type Product = {
     variations?: ProductVariation[];
     createdAt?: string | Date;
     updatedAt?: string | Date;
+    // Stock information
+    stock?: {
+        id: number;
+        sku: string;
+        quantity: number;
+        lowStockThreshold: number;
+        status: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+    };
 };
 
 // Type for creating new products

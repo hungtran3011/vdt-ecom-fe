@@ -1,7 +1,7 @@
 'use client';
 import { SessionProvider } from "next-auth/react";
 import { QueryProvider } from "@/providers/QueryProvider";
-import { CartProvider } from "@/contexts/CartContext";
+import EnhancedCartProvider from "@/contexts/EnhancedCartContext";
 
 export default function RootLayout({
   children,
@@ -13,9 +13,9 @@ export default function RootLayout({
       <body className="bg-(--md-sys-color-background)">
         <SessionProvider>
           <QueryProvider>
-            <CartProvider>
+            <EnhancedCartProvider>
               {children}
-            </CartProvider>
+            </EnhancedCartProvider>
           </QueryProvider>
         </SessionProvider>
       </body>

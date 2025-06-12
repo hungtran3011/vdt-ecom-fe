@@ -3,7 +3,10 @@ import { HTMLAttributes } from "react";
 import Image from "next/image";
 import Button from "./Button";
 import Card from "./Card";
+import StockBadge from "./StockBadge";
+import StockAwareAddToCart from "./StockAwareAddToCart";
 import { Product } from "@/types/Product";
+import { useStockByProduct } from "@/hooks/useStock";
 import { formatVND } from "@/utils/currency";
 import { t } from "@/utils/localization";
 
@@ -13,6 +16,7 @@ type ProductCardProps = {
     onAddToCart?: () => void;
     size?: 'small' | 'medium' | 'large';
     showActions?: boolean;
+    showStock?: boolean;
 } & Partial<HTMLAttributes<HTMLDivElement>>;
 
 export default function ProductCard({ 
@@ -21,9 +25,15 @@ export default function ProductCard({
     onAddToCart, 
     size = 'medium',
     showActions = true,
+    showStock = true,
     className,
     ...htmlProps 
 }: ProductCardProps) {
+    // Fetch stock information for this product
+    const { data: stockData, isLoading: stockLoading } = useStockByProduct(product.id);
+    
+    // Use stock data from props if available, otherwise use fetched data
+    const stock = product.stock || stockData;
     const sizeClasses = {
         small: {
             container: 'max-w-[280px]',
@@ -65,17 +75,12 @@ export default function ProductCard({
         }
     };
 
-    const handleAddToCart = () => {
-        if (onAddToCart) {
-            onAddToCart();
-        } else {
-            // Default behavior - could implement add to cart logic here
-            console.log(`Adding ${product.name} to cart`);
-        }
-    };
+    // Determine if add to cart should be disabled
+    const isOutOfStock = stock?.status === 'OUT_OF_STOCK';
+    const isLowStock = stock?.status === 'LOW_STOCK';
 
     return (
-        <div className={`w-full ${styles.container}`} {...htmlProps}>
+        <div className={`w-full ${styles.container} cursor-pointer`} {...htmlProps} onClick={handleViewDetails}>
             <Card className={`overflow-hidden hover:shadow-lg transition-shadow duration-200 group ${className || ''}`}>
                 {/* Product Image */}
                 <div className={`${styles.image} bg-(--md-sys-color-surface-container-highest) relative overflow-hidden`}>
@@ -91,6 +96,18 @@ export default function ProductCard({
                             <span className={`mdi ${size === 'small' ? 'text-2xl' : size === 'medium' ? 'text-3xl' : 'text-4xl'} text-(--md-sys-color-on-surface-variant)`}>
                                 image
                             </span>
+                        </div>
+                    )}
+                    
+                    {/* Stock Badge - positioned in top right corner */}
+                    {showStock && stock && (
+                        <div className="absolute top-2 right-2">
+                            <StockBadge 
+                                status={stock.status}
+                                quantity={stock.quantity}
+                                showQuantity={size !== 'small' && stock.status !== 'OUT_OF_STOCK'}
+                                size={size === 'large' ? 'medium' : 'small'}
+                            />
                         </div>
                     )}
                 </div>
@@ -125,18 +142,23 @@ export default function ProductCard({
                             <Button
                                 variant="outlined"
                                 label={t('actions.viewDetails')}
-                                className={`flex-1 ${styles.buttons}`}
+                                className="flex-1"
                                 hasIcon={size !== 'small'}
                                 icon={size !== 'small' ? "visibility" : undefined}
-                                onClick={handleViewDetails}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewDetails();
+                                }}
                             />
-                            <Button
+                            <StockAwareAddToCart
+                                productId={product.id}
+                                productName={product.name}
+                                quantity={1}
+                                onAddToCart={onAddToCart ? () => onAddToCart() : undefined}
                                 variant="filled"
-                                label={t('actions.addToCart')}
-                                className={`flex-1 ${styles.buttons}`}
-                                hasIcon={size !== 'small'}
-                                icon={size !== 'small' ? "shopping_cart" : undefined}
-                                onClick={handleAddToCart}
+                                size={size}
+                                disabled={isOutOfStock}
+                                className="flex-1"
                             />
                         </div>
                     )}

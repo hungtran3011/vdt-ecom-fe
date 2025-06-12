@@ -8,7 +8,7 @@ import Button from '@/components/Button';
 import IconButton from '@/components/IconButton';
 import Chip from '@/components/Chip';
 import { useProduct } from '@/hooks/useProducts';
-import { useCartContext } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/EnhancedCartContext';
 import { ProductVariation } from '@/types/Product';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { cn } from '@/utils/cn';

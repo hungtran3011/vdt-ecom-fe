@@ -6,7 +6,7 @@ import { List, ListItem } from '@/components/List';
 import Button from '@/components/Button';
 import OrderActions from '@/components/OrderActions';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
-import { Order, OrderStatus } from '@/types/Order';
+import { Order, OrderStatus, OrderStatusLabels, PaymentMethodLabels } from '@/types/Order';
 import { useUserOrders, useReorderOrder } from '@/hooks/useOrders';
 import { useAuth } from '@/hooks/useUsers';
 import { useRouter } from 'next/navigation';
@@ -30,6 +30,7 @@ export default function OrdersPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedDateRange, setSelectedDateRange] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const [showSearchTips, setShowSearchTips] = useState(false);
   
   const {
     data: orders = [],
@@ -157,7 +158,16 @@ export default function OrdersPage() {
         order.items.some(item => 
           item.productName.toLowerCase().includes(query)
         ) ||
-        order.address.toLowerCase().includes(query)
+        order.address.toLowerCase().includes(query) ||
+        order.phone?.toLowerCase().includes(query) ||
+        order.userEmail?.toLowerCase().includes(query) ||
+        order.note?.toLowerCase().includes(query) ||
+        // Search by order status in Vietnamese
+        OrderStatusLabels[order.status]?.toLowerCase().includes(query) ||
+        // Search by payment method in Vietnamese
+        PaymentMethodLabels[order.paymentMethod]?.toLowerCase().includes(query) ||
+        // Search by total amount (convert to string for partial matching)
+        order.totalPrice.toString().includes(query.replace(/[^\d]/g, ''))
       );
     }
 
@@ -299,9 +309,11 @@ export default function OrdersPage() {
         <div className="relative">
           <input
             type="text"
-            placeholder="Tìm kiếm theo mã đơn hàng, sản phẩm hoặc địa chỉ..."
+            placeholder="Tìm kiếm theo mã đơn hàng, sản phẩm, địa chỉ, SĐT, email, ghi chú, trạng thái..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setShowSearchTips(true)}
+            onBlur={() => setTimeout(() => setShowSearchTips(false), 200)}
             className="w-full px-4 py-3 pl-12 rounded-lg border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] placeholder-[var(--md-sys-color-on-surface-variant)] focus:outline-none focus:ring-2 focus:ring-[var(--md-sys-color-primary)]"
           />
           <span className="mdi mdi-magnify absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--md-sys-color-on-surface-variant)]"></span>
@@ -312,6 +324,49 @@ export default function OrdersPage() {
             >
               <span className="mdi mdi-close"></span>
             </button>
+          )}
+          
+          {/* Search Tips Dropdown */}
+          {showSearchTips && !searchQuery && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline)] rounded-lg shadow-lg z-10 p-4">
+              <div className="text-sm text-[var(--md-sys-color-on-surface-variant)] mb-2 font-medium">
+                💡 Mẹo tìm kiếm:
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="mdi mdi-identifier text-[var(--md-sys-color-primary)]"></span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Mã đơn hàng (vd: ORD123)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mdi mdi-shopping text-[var(--md-sys-color-primary)]"></span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Tên sản phẩm</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mdi mdi-map-marker text-[var(--md-sys-color-primary)]"></span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Địa chỉ giao hàng</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mdi mdi-phone text-[var(--md-sys-color-primary)]"></span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Số điện thoại</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mdi mdi-email text-[var(--md-sys-color-primary)]"></span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Email khách hàng</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mdi mdi-information text-[var(--md-sys-color-primary)]"></span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Trạng thái (vd: đã giao)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mdi mdi-cash text-[var(--md-sys-color-primary)]"></span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Số tiền (vd: 50000)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mdi mdi-note-text text-[var(--md-sys-color-primary)]"></span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Ghi chú đơn hàng</span>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
@@ -388,6 +443,44 @@ export default function OrdersPage() {
           </Card>
         )}
       </div>
+
+      {/* Search Results Summary */}
+      {(searchQuery || selectedDateRange !== 'all' || activeTab !== 'all') && (
+        <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--md-sys-color-on-surface-variant)] bg-[var(--md-sys-color-surface-container-lowest)] rounded-lg p-3 mb-4">
+          <span className="mdi mdi-filter-variant mr-1"></span>
+          <span>
+            Hiển thị <span className="font-semibold text-[var(--md-sys-color-primary)]">{filteredAndSortedOrders.length}</span> đơn hàng
+            {searchQuery && <span> phù hợp với tìm kiếm &ldquo;{searchQuery}&rdquo;</span>}
+            {activeTab !== 'all' && (
+              <span> trong mục &ldquo;{
+                activeTab === 'pending' ? 'Đang xử lý' :
+                activeTab === 'processing' ? 'Đang giao' :
+                activeTab === 'completed' ? 'Hoàn thành' :
+                activeTab === 'cancelled' ? 'Đã hủy' : activeTab
+              }&rdquo;</span>
+            )}
+            {selectedDateRange !== 'all' && (
+              <span> trong khoảng thời gian &ldquo;{
+                selectedDateRange === 'today' ? 'hôm nay' :
+                selectedDateRange === 'week' ? '7 ngày qua' :
+                selectedDateRange === 'month' ? '30 ngày qua' : selectedDateRange
+              }&rdquo;</span>
+            )}
+          </span>
+          <Button
+            variant="text"
+            label="Xóa bộ lọc"
+            onClick={() => {
+              setSearchQuery('');
+              setActiveTab('all');
+              setSelectedDateRange('all');
+              setSortBy('date');
+              setSortOrder('desc');
+            }}
+            className="text-xs ml-auto"
+          />
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="overflow-x-auto mb-6">

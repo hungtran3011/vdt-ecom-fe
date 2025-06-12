@@ -18,6 +18,7 @@ export interface CartItemDto {
 export interface CartDto {
   id: number;
   userId?: number;
+  userEmail?: string;
   sessionId?: string;
   status: 'ACTIVE' | 'ABANDONED' | 'CONVERTED';
   totalItems: number;
@@ -30,6 +31,7 @@ export interface CartDto {
 // Request DTOs
 export interface CreateCartRequest {
   userId?: number;
+  userEmail?: string;
   sessionId?: string;
 }
 

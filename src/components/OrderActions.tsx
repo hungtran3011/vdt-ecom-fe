@@ -49,10 +49,13 @@ export default function OrderActions({
     
     setIsLoading(true);
     try {
+      console.log('Attempting to cancel order:', order.id);
       await onCancelOrder(order.id);
+      console.log('Order cancelled successfully');
       setShowCancelModal(false);
     } catch (error) {
       console.error('Failed to cancel order:', error);
+      alert('Không thể hủy đơn hàng. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -95,10 +98,11 @@ export default function OrderActions({
           <Button
             variant="outlined"
             label="Hủy"
-            onClick={() => setShowCancelModal(true)}
+            onClick={handleCancelOrder}
             className="text-xs px-2 py-1 text-[var(--md-sys-color-error)]"
             icon="cancel"
             hasIcon
+            disabled={isLoading}
           />
         )}
       </div>
@@ -153,39 +157,37 @@ export default function OrderActions({
         )}
       </div>
 
-      {/* Cancel Confirmation Modal */}
-      {showCancelModal && (
-        <Modal
-          isOpen={showCancelModal}
-          onClose={() => setShowCancelModal(false)}
-          title="Xác nhận hủy đơn hàng"
-        >
-          <div className="p-6">
-            <p className="text-[var(--md-sys-color-on-surface)] mb-4">
-              Bạn có chắc chắn muốn hủy đơn hàng #{order.id}?
-            </p>
-            <p className="text-sm text-[var(--md-sys-color-on-surface-variant)] mb-6">
-              Hành động này không thể hoàn tác. Nếu bạn đã thanh toán, số tiền sẽ được hoàn lại trong 3-5 ngày làm việc.
-            </p>
-            
-            <div className="flex gap-3 justify-end">
-              <Button
-                variant="text"
-                label="Quay lại"
-                onClick={() => setShowCancelModal(false)}
-                disabled={isLoading}
-              />
-              <Button
-                variant="filled"
-                label={isLoading ? "Đang hủy..." : "Xác nhận hủy"}
-                onClick={handleCancelOrder}
-                disabled={isLoading}
-                className="bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)]"
-              />
-            </div>
+      {/* Cancel Order Modal */}
+      <Modal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Hủy đơn hàng"
+      >
+        <div className="p-6">
+          <p className="text-[var(--md-sys-color-on-surface)] mb-4">
+            Bạn có chắc chắn muốn hủy đơn hàng #{order.id}?
+          </p>
+          <p className="text-[var(--md-sys-color-on-surface-variant)] text-sm mb-6">
+            Hành động này không thể hoàn tác. Đơn hàng sẽ được hủy và bạn sẽ nhận được email xác nhận.
+          </p>
+          
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="outlined"
+              label="Không hủy"
+              onClick={() => setShowCancelModal(false)}
+              disabled={isLoading}
+            />
+            <Button
+              variant="filled"
+              label={isLoading ? "Đang hủy..." : "Xác nhận hủy"}
+              onClick={handleCancelOrder}
+              disabled={isLoading}
+              className="bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)]"
+            />
           </div>
-        </Modal>
-      )}
+        </div>
+      </Modal>
     </>
   );
 }

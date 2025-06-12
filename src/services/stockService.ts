@@ -37,7 +37,17 @@ export const stockService = {
 
   // Get stock item by product ID
   async getStockByProductId(productId: number): Promise<StockItem> {
-    const response = await api.get(`/api/v1/stock/product/${productId}`);
+    const response = await api.get(`/v1/stock/product/${productId}`);
+    return response.data;
+  },
+
+  // Validate product stock availability by product ID
+  async validateProductStockAvailability(productId: number, quantity: number): Promise<{
+    available: boolean;
+    availableQuantity: number;
+    message?: string;
+  }> {
+    const response = await api.post(`/v1/stock/product/${productId}/validate`, { quantity });
     return response.data;
   },
 

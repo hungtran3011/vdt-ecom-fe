@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
+import { cartService } from '@/services/cartService';
+import { stockService } from '@/services/stockService';
+import { CartDto } from '@/types/Cart';
 
 interface LocalCartItem {
   productId: number;
@@ -9,12 +12,15 @@ interface LocalCartItem {
   quantity: number;
   unitPrice: number;
   addedAt: string;
+  selected: boolean;
 }
 
 interface LocalCart {
   items: LocalCartItem[];
   totalItems: number;
   totalPrice: number;
+  selectedItems: number;
+  selectedTotalPrice: number;
   updatedAt: string;
 }
 
@@ -24,9 +30,14 @@ interface CartContextType {
   addToCart: (productId: number, variationId?: number, quantity?: number, unitPrice?: number) => void;
   removeFromCart: (productId: number, variationId?: number) => void;
   updateQuantity: (productId: number, variationId: number | undefined, quantity: number) => void;
+  toggleItemSelection: (productId: number, variationId?: number) => void;
+  selectAllItems: (selected: boolean) => void;
   clearCart: () => void;
   getCartItemCount: () => number;
   getCartTotal: () => number;
+  getSelectedItemsCount: () => number;
+  getSelectedItemsTotal: () => number;
+  getSelectedItems: () => LocalCartItem[];
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -43,6 +54,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     items: [],
     totalItems: 0,
     totalPrice: 0,
+    selectedItems: 0,
+    selectedTotalPrice: 0,
     updatedAt: new Date().toISOString(),
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +66,21 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       const storedCart = localStorage.getItem(CART_STORAGE_KEY);
       if (storedCart) {
         const parsedCart: LocalCart = JSON.parse(storedCart);
-        setCart(parsedCart);
+        // Ensure backward compatibility - set selected to true for existing items
+        const updatedItems = parsedCart.items.map(item => ({
+          ...item,
+          selected: item.selected !== undefined ? item.selected : true
+        }));
+        const totals = calculateCartTotals(updatedItems);
+        const selectedTotals = calculateSelectedTotals(updatedItems);
+        setCart({
+          ...parsedCart,
+          items: updatedItems,
+          totalItems: totals.totalItems,
+          totalPrice: totals.totalPrice,
+          selectedItems: selectedTotals.selectedItems,
+          selectedTotalPrice: selectedTotals.selectedTotalPrice,
+        });
       }
     } catch (error) {
       console.error('Error loading cart from localStorage:', error);
@@ -95,6 +122,18 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     );
   };
 
+  const calculateSelectedTotals = (items: LocalCartItem[]): { selectedItems: number; selectedTotalPrice: number } => {
+    return items
+      .filter(item => item.selected)
+      .reduce(
+        (totals, item) => ({
+          selectedItems: totals.selectedItems + item.quantity,
+          selectedTotalPrice: totals.selectedTotalPrice + (item.unitPrice * item.quantity),
+        }),
+        { selectedItems: 0, selectedTotalPrice: 0 }
+      );
+  };
+
   const addToCart = (productId: number, variationId?: number, quantity: number = 1, unitPrice: number = 0) => {
     setCart(prevCart => {
       const existingItemIndex = prevCart.items.findIndex(
@@ -111,23 +150,27 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
           quantity: newItems[existingItemIndex].quantity + quantity,
         };
       } else {
-        // Add new item
+        // Add new item (selected by default)
         const newItem: LocalCartItem = {
           productId,
           variationId,
           quantity,
           unitPrice,
           addedAt: new Date().toISOString(),
+          selected: true,
         };
         newItems = [...prevCart.items, newItem];
       }
 
       const totals = calculateCartTotals(newItems);
+      const selectedTotals = calculateSelectedTotals(newItems);
 
       return {
         items: newItems,
         totalItems: totals.totalItems,
         totalPrice: totals.totalPrice,
+        selectedItems: selectedTotals.selectedItems,
+        selectedTotalPrice: selectedTotals.selectedTotalPrice,
         updatedAt: new Date().toISOString(),
       };
     });
@@ -140,11 +183,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       );
 
       const totals = calculateCartTotals(newItems);
+      const selectedTotals = calculateSelectedTotals(newItems);
 
       return {
         items: newItems,
         totalItems: totals.totalItems,
         totalPrice: totals.totalPrice,
+        selectedItems: selectedTotals.selectedItems,
+        selectedTotalPrice: selectedTotals.selectedTotalPrice,
         updatedAt: new Date().toISOString(),
       };
     });
@@ -165,11 +211,58 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       });
 
       const totals = calculateCartTotals(newItems);
+      const selectedTotals = calculateSelectedTotals(newItems);
 
       return {
         items: newItems,
         totalItems: totals.totalItems,
         totalPrice: totals.totalPrice,
+        selectedItems: selectedTotals.selectedItems,
+        selectedTotalPrice: selectedTotals.selectedTotalPrice,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+  };
+
+  const toggleItemSelection = (productId: number, variationId?: number) => {
+    setCart(prevCart => {
+      const newItems = prevCart.items.map(item => {
+        if (item.productId === productId && item.variationId === variationId) {
+          return { ...item, selected: !item.selected };
+        }
+        return item;
+      });
+
+      const totals = calculateCartTotals(newItems);
+      const selectedTotals = calculateSelectedTotals(newItems);
+
+      return {
+        items: newItems,
+        totalItems: totals.totalItems,
+        totalPrice: totals.totalPrice,
+        selectedItems: selectedTotals.selectedItems,
+        selectedTotalPrice: selectedTotals.selectedTotalPrice,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+  };
+
+  const selectAllItems = (selected: boolean) => {
+    setCart(prevCart => {
+      const newItems = prevCart.items.map(item => ({
+        ...item,
+        selected,
+      }));
+
+      const totals = calculateCartTotals(newItems);
+      const selectedTotals = calculateSelectedTotals(newItems);
+
+      return {
+        items: newItems,
+        totalItems: totals.totalItems,
+        totalPrice: totals.totalPrice,
+        selectedItems: selectedTotals.selectedItems,
+        selectedTotalPrice: selectedTotals.selectedTotalPrice,
         updatedAt: new Date().toISOString(),
       };
     });
@@ -180,6 +273,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       items: [],
       totalItems: 0,
       totalPrice: 0,
+      selectedItems: 0,
+      selectedTotalPrice: 0,
       updatedAt: new Date().toISOString(),
     };
     setCart(emptyCart);
@@ -187,8 +282,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   };
 
   const getCartItemCount = () => cart.totalItems;
-
   const getCartTotal = () => cart.totalPrice;
+  const getSelectedItemsCount = () => cart.selectedItems;
+  const getSelectedItemsTotal = () => cart.selectedTotalPrice;
+  const getSelectedItems = () => cart.items.filter(item => item.selected);
 
   const contextValue: CartContextType = {
     cart,
@@ -196,9 +293,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     addToCart,
     removeFromCart,
     updateQuantity,
+    toggleItemSelection,
+    selectAllItems,
     clearCart,
     getCartItemCount,
     getCartTotal,
+    getSelectedItemsCount,
+    getSelectedItemsTotal,
+    getSelectedItems,
   };
 
   return (

@@ -101,7 +101,7 @@ export class OrderService {
    */
   async updateOrderStatus(id: string, status: OrderStatus): Promise<Order> {
     try {
-      const response = await api.patch(`/v1/orders/${id}/status`, { status });
+      const response = await api.post(`/v1/orders/${id}/status`, { status });
       return transformOrderDto(response.data);
     } catch (error) {
       console.error(`Error updating order status with id ${id}:`, error);
@@ -130,7 +130,7 @@ export class OrderService {
    */
   async cancelOrder(id: string): Promise<Order> {
     try {
-      const response = await api.patch(`/v1/orders/${id}/cancel`);
+      const response = await api.post(`/v1/orders/${id}/cancel`);
       return transformOrderDto(response.data);
     } catch (error) {
       console.error(`Error cancelling order with id ${id}:`, error);

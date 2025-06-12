@@ -12,7 +12,7 @@ import { useSession, signOut } from "next-auth/react";
 // import { useSession } from "@/hooks/useSessionDebug"; // Debug version - temporarily disabled
 import { useRouter } from 'next/navigation';
 import { isAdmin } from "@/utils/roleCheck";
-import { useCartContext } from "@/contexts/CartContext";
+import { useCartContext } from "@/contexts/EnhancedCartContext";
 // import { useSessionHealth } from "@/hooks/useSessionHealth"; // Temporarily disabled
 
 export default function Navbar() {
@@ -20,6 +20,12 @@ export default function Navbar() {
     const router = useRouter();
     const { getCartItemCount } = useCartContext();
     // const sessionHealth = useSessionHealth(); // Temporarily disabled
+
+    const handleSearch = (query: string) => {
+        if (query.trim()) {
+            router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+        }
+    };
 
     const handleSignOut = async () => {
         try {
@@ -268,7 +274,7 @@ export default function Navbar() {
                     
                     {/* Center section: Search */}
                     <div className="flex-1 max-w-md mx-6">
-                        <SearchBox className="w-full" />
+                        <SearchBox className="w-full" onSearch={handleSearch} />
                     </div>
 
                     {/* Right section: User actions */}

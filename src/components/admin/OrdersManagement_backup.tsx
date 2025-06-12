@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Card from '@/components/Card';
 import { List, ListItem } from '@/components/List';
-import Chip from '@/components/Chip';
+import Chip from                     <span className="text-(--md-sys-color-on-surface-variant)">{t('orders.customer')}:</span>
+                    <span className="ml-2">{order.userEmail}</span>/components/Chip';
 import Button from '@/components/Button';
 import TextField from '@/components/TextField';
 import Select from '@/components/Select';
@@ -49,10 +50,31 @@ function OrderDetailModal({ order, isOpen, onClose, onStatusUpdate }: OrderDetai
   if (!isOpen || !order) return null;
 
   const handleStatusUpdate = () => {
-    if (selectedStatus) {
+    if (selectedStatus !== '' && selectedStatus !== order.status) {
       onStatusUpdate(order.id, selectedStatus);
       onClose();
     }
+  };
+
+  const canUpdateStatus = (currentStatus: OrderStatus, newStatus: OrderStatus): boolean => {
+    const validTransitions: Record<OrderStatus, OrderStatus[]> = {
+      [OrderStatus.PENDING_PAYMENT]: [OrderStatus.PAID, OrderStatus.CANCELLED, OrderStatus.PAYMENT_FAILED],
+      [OrderStatus.PAID]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+      [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+      [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+      [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
+      [OrderStatus.DELIVERED]: [],
+      [OrderStatus.CANCELLED]: [],
+      [OrderStatus.PAYMENT_FAILED]: [OrderStatus.PENDING_PAYMENT]
+    };
+    
+    return validTransitions[currentStatus]?.includes(newStatus) || false;
+  };
+
+  const getStatusOptions = () => {
+    return Object.entries(OrderStatusLabels)
+      .filter(([value]) => canUpdateStatus(order.status, value as unknown as OrderStatus))
+      .map(([value, label]) => ({ value, label }));
   };
 
   const getStatusColor = (status: OrderStatus): 'error' | 'tertiary' | 'secondary' | 'primary' => {
@@ -133,44 +155,25 @@ function OrderDetailModal({ order, isOpen, onClose, onStatusUpdate }: OrderDetai
                 <h4 className="font-medium mb-2">{t('orders.customerInformation')}</h4>
                 <div className="space-y-1 text-sm">
                   <p>
-                    <span className="text-(--md-sys-color-on-surface-variant)">{t('orders.customer')}:</span>
-                    <span className="ml-2 text-(--md-sys-color-on-surface)">{order.userEmail || 'N/A'}</span>
+                    <span className="text-(--md-sys-color-on-surface-variant)">{t('orders.name')}:</span>
+                    <span className="ml-2">{order.userId}</span>
                   </p>
                   <p>
-                    <span className="text-(--md-sys-color-on-surface-variant)">{t('orders.phone')}:</span>
-                    <span className="ml-2 text-(--md-sys-color-on-surface)">{order.phone}</span>
-                  </p>
-                  <p>
-                    <span className="text-(--md-sys-color-on-surface-variant)">{t('orders.address')}:</span>
-                    <span className="ml-2 text-(--md-sys-color-on-surface)">{order.address}</span>
+                    <span className="text-(--md-sys-color-on-surface-variant)">{t('orders.payment')}:</span>
+                    <span className="ml-2">{PaymentMethodLabels[order.paymentMethod]}</span>
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Payment Information */}
-            <div>
-              <h4 className="font-medium mb-2">{t('orders.paymentInformation')}</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <p>
-                  <span className="text-(--md-sys-color-on-surface-variant)">{t('orders.paymentMethod')}:</span>
-                  <span className="ml-2 text-(--md-sys-color-on-surface)">{PaymentMethodLabels[order.paymentMethod]}</span>
-                </p>
-                <p>
-                  <span className="text-(--md-sys-color-on-surface-variant)">{t('orders.paymentStatus')}:</span>
-                  <span className="ml-2 text-(--md-sys-color-on-surface)">{order.paymentStatus}</span>
-                </p>
-              </div>
-            </div>
-
             {/* Order Items */}
             <div>
-              <h4 className="font-medium mb-2">{t('orders.items')}</h4>
+              <h4 className="font-medium mb-2">{t('orders.orderItems')}</h4>
               <div className="space-y-2">
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-(--md-sys-color-surface-container) rounded-lg">
-                    <div>
-                      <p className="font-medium text-(--md-sys-color-on-surface)">{item.productName}</p>
+                {order.items.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center p-2 bg-(--md-sys-color-surface-container-lowest) rounded">
+                    <div className="flex-1">
+                      <p className="font-medium">{item.productName}</p>
                       <p className="text-sm text-(--md-sys-color-on-surface-variant)">
                         {t('orders.quantity')}: {item.quantity} × {formatCurrency(item.price)}
                       </p>
@@ -181,38 +184,31 @@ function OrderDetailModal({ order, isOpen, onClose, onStatusUpdate }: OrderDetai
               </div>
             </div>
 
-            {/* Notes */}
-            {order.note && (
+            {/* Status Update */}
+            {getStatusOptions().length > 0 && (
               <div>
-                <h4 className="font-medium mb-2">{t('orders.notes')}</h4>
-                <p className="text-sm text-(--md-sys-color-on-surface-variant) bg-(--md-sys-color-surface-container) p-3 rounded-lg">
-                  {order.note}
-                </p>
+                <h4 className="font-medium mb-2">{t('orders.updateStatus')}</h4>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <Select
+                      label={t('orders.newStatus')}
+                      value={selectedStatus.toString()}
+                      onChange={(value) => setSelectedStatus(value as unknown as OrderStatus)}
+                      options={[
+                        { value: '', label: t('orders.selectNewStatus') },
+                        ...getStatusOptions()
+                      ]}
+                    />
+                  </div>
+                  <Button
+                    variant="filled"
+                    label={t('actions.update')}
+                    onClick={handleStatusUpdate}
+                    disabled={selectedStatus === '' || selectedStatus === order.status}
+                  />
+                </div>
               </div>
             )}
-
-            {/* Status Update */}
-            <div className="pt-4 border-t border-(--md-sys-color-outline-variant)">
-              <h4 className="font-medium mb-2">{t('orders.updateStatus')}</h4>
-              <div className="flex gap-2">
-                <Select
-                  label={t('orders.newStatus')}
-                  value={selectedStatus.toString()}
-                  onChange={(value) => setSelectedStatus(value as OrderStatus)}
-                  options={Object.values(OrderStatus).map(status => ({
-                    value: status,
-                    label: OrderStatusLabels[status]
-                  }))}
-                  className="flex-1"
-                />
-                <Button
-                  variant="filled"
-                  label={t('actions.update')}
-                  onClick={handleStatusUpdate}
-                  disabled={!selectedStatus}
-                />
-              </div>
-            </div>
           </div>
         </div>
       </Card>
@@ -234,7 +230,7 @@ export default function OrdersManagement({
   const defaultFallbackOrders: Order[] = [
     {
       id: 'order-1',
-      userEmail: 'john.doe@example.com',
+      userId: 'John Doe',
       address: '123 Main St, City, Country',
       phone: '+1234567890',
       note: 'Test order note',
@@ -260,7 +256,7 @@ export default function OrdersManagement({
     },
     {
       id: 'order-2',
-      userEmail: 'jane.smith@example.com',
+      userId: 'Jane Smith',
       address: '456 Oak Ave, Town, Country',
       phone: '+0987654321',
       note: 'Second test order',
@@ -307,8 +303,8 @@ export default function OrdersManagement({
   // TanStack Query hooks
   const { 
     data: ordersData, 
+    isError,
     isLoading,
-    isError, 
     refetch 
   } = useOrders({
     page: pagination.paginationParams.page,
@@ -385,21 +381,6 @@ export default function OrdersManagement({
     }).format(new Date(date));
   };
 
-  if (isLoading) {
-    return (
-      <div className={className}>
-        <h2 className="text-2xl font-bold text-(--md-sys-color-on-surface) mb-6">{title}</h2>
-        <Card variant="elevated" className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-(--md-sys-color-outline-variant) rounded w-3/4"></div>
-            <div className="h-4 bg-(--md-sys-color-outline-variant) rounded w-1/2"></div>
-            <div className="h-4 bg-(--md-sys-color-outline-variant) rounded w-5/6"></div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className={className}>
       {/* Header */}
@@ -440,25 +421,25 @@ export default function OrdersManagement({
             <div className="text-2xl font-bold text-(--md-sys-color-primary)">
               {statistics?.total || 0}
             </div>
-            <div className="text-sm text-(--md-sys-color-on-surface-variant)">{t('admin.analytics.totalOrders')}</div>
+            <div className="text-sm text-(--md-sys-color-on-surface-variant)">Total Orders</div>
           </Card>
           <Card className="p-4">
             <div className="text-2xl font-bold text-(--md-sys-color-primary)">
               {formatCurrency(statistics?.totalRevenue || 0)}
             </div>
-            <div className="text-sm text-(--md-sys-color-on-surface-variant)">{t('admin.analytics.totalRevenue')}</div>
+            <div className="text-sm text-(--md-sys-color-on-surface-variant)">Total Revenue</div>
           </Card>
           <Card className="p-4">
             <div className="text-2xl font-bold text-(--md-sys-color-secondary)">
               {statistics?.statusCounts?.['PENDING_PAYMENT'] || 0}
             </div>
-            <div className="text-sm text-(--md-sys-color-on-surface-variant)">{t('admin.analytics.pendingOrders')}</div>
+            <div className="text-sm text-(--md-sys-color-on-surface-variant)">Pending Orders</div>
           </Card>
           <Card className="p-4">
             <div className="text-2xl font-bold text-(--md-sys-color-primary)">
               {statistics?.statusCounts?.['DELIVERED'] || 0}
             </div>
-            <div className="text-sm text-(--md-sys-color-on-surface-variant)">{t('admin.analytics.completedOrders')}</div>
+            <div className="text-sm text-(--md-sys-color-on-surface-variant)">Completed Orders</div>
           </Card>
         </div>
       )}
@@ -480,10 +461,10 @@ export default function OrdersManagement({
                 value={filters.status.toString()}
                 onChange={(value) => setFilters(prev => ({ ...prev, status: value as OrderStatus | '' }))}
                 options={[
-                  { value: '', label: t('common.allStatuses') },
-                  ...Object.values(OrderStatus).map(status => ({
-                    value: status,
-                    label: OrderStatusLabels[status]
+                  { value: '', label: t('orders.allStatuses') },
+                  ...Object.entries(OrderStatusLabels).map(([value, label]) => ({
+                    value,
+                    label
                   }))
                 ]}
               />
@@ -493,10 +474,10 @@ export default function OrdersManagement({
                 value={filters.paymentMethod.toString()}
                 onChange={(value) => setFilters(prev => ({ ...prev, paymentMethod: value as PaymentMethod | '' }))}
                 options={[
-                  { value: '', label: t('common.allMethods') },
-                  ...Object.values(PaymentMethod).map(method => ({
-                    value: method,
-                    label: PaymentMethodLabels[method]
+                  { value: '', label: t('orders.allPaymentMethods') },
+                  ...Object.entries(PaymentMethodLabels).map(([value, label]) => ({
+                    value,
+                    label
                   }))
                 ]}
               />
@@ -506,11 +487,10 @@ export default function OrdersManagement({
                 value={filters.paymentStatus.toString()}
                 onChange={(value) => setFilters(prev => ({ ...prev, paymentStatus: value as PaymentStatus | '' }))}
                 options={[
-                  { value: '', label: t('common.allStatuses') },
-                  ...Object.values(PaymentStatus).map(status => ({
-                    value: status,
-                    label: status
-                  }))
+                  { value: '', label: t('orders.allPaymentStatuses') },
+                  { value: PaymentStatus.PENDING.toString(), label: 'Pending' },
+                  { value: PaymentStatus.SUCCESSFUL.toString(), label: 'Successful' },
+                  { value: PaymentStatus.FAILED.toString(), label: 'Failed' }
                 ]}
               />
               
@@ -537,7 +517,7 @@ export default function OrdersManagement({
         <Card variant="outlined" className="text-center py-12">
           <div className="flex flex-col items-center justify-center">
             <span className="mdi text-4xl text-(--md-sys-color-error) mb-4">error</span>
-            <p className="text-(--md-sys-color-error) mb-4">{t('admin.errors.failedToLoadOrders')}</p>
+            <p className="text-(--md-sys-color-error) mb-4">Failed to load orders</p>
             <Button 
               variant="filled"
               onClick={() => refetch()}
@@ -552,7 +532,7 @@ export default function OrdersManagement({
           <div className="flex flex-col items-center justify-center">
             <span className="mdi text-4xl text-(--md-sys-color-on-surface-variant) mb-4">receipt_long</span>
             <p className="text-(--md-sys-color-on-surface-variant)">
-              {filters.search || filters.status ? t('admin.errors.noOrdersFound') : t('admin.errors.noOrdersAvailable')}
+              {filters.search || filters.status ? 'No orders found matching your filters' : 'No orders available'}
             </p>
           </div>
         </Card>
@@ -575,54 +555,37 @@ export default function OrdersManagement({
                       label={OrderStatusLabels[order.status]}
                       selected
                     />
-                    <Button
-                      variant="text"
-                      hasIcon
-                      icon="visibility"
-                      label={t('actions.view')}
-                      onClick={() => handleOrderClick(order)}
-                    />
+                    {showActions && (
+                      <Button
+                        variant="text"
+                        hasIcon
+                        icon="visibility"
+                        label={t('actions.view')}
+                        onClick={() => handleOrderClick(order)}
+                      />
+                    )}
                   </div>
                 }
-                headline={`${t('orders.order')} #${order.id}`}
-                supportingText={
-                  <div className="space-y-1">
-                    <div>{order.userEmail || t('common.unknown')}</div>
-                    <div className="text-sm text-(--md-sys-color-on-surface-variant)">
-                      {formatDate(order.createdAt)} • {formatCurrency(order.totalPrice)}
-                    </div>
-                  </div>
-                }
+                supportingText={`Customer: ${order.userId} • Payment: ${PaymentMethodLabels[order.paymentMethod]} • ${formatDate(order.createdAt)}`}
                 onClick={() => handleOrderClick(order)}
-                className="cursor-pointer hover:bg-(--md-sys-color-surface-variant)"
-              />
+              >
+                <div className="font-medium text-(--md-sys-color-on-surface)">
+                  Order #{order.id} • {formatCurrency(order.totalPrice)}
+                </div>
+              </ListItem>
             ))}
           </List>
+          
+          {/* Pagination */}
+          {ordersData && (
+            <div className="p-4 border-t border-(--md-sys-color-outline-variant)">
+              <Pagination
+                paginationInfo={pagination.paginationInfo}
+                controls={pagination.controls}
+              />
+            </div>
+          )}
         </Card>
-      )}
-
-      {/* Pagination */}
-      {ordersData?.pagination && (
-        <div className="mt-6">
-          <Pagination
-            paginationInfo={{
-              currentPage: ordersData.pagination.page,
-              pageSize: ordersData.pagination.size,
-              totalElements: ordersData.pagination.totalElements,
-              totalPages: ordersData.pagination.totalPages,
-              hasNext: ordersData.pagination.hasNext,
-              hasPrevious: ordersData.pagination.hasPrevious
-            }}
-            controls={{
-              goToPage: (page) => pagination.setPage(page),
-              goToNext: () => pagination.setPage(pagination.paginationParams.page + 1),
-              goToPrevious: () => pagination.setPage(pagination.paginationParams.page - 1),
-              goToFirst: () => pagination.setPage(0),
-              goToLast: () => pagination.setPage(ordersData.pagination.totalPages - 1),
-              setPageSize: (size) => pagination.setSize(size)
-            }}
-          />
-        </div>
       )}
 
       {/* Order Detail Modal */}

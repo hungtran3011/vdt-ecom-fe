@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useForm, Controller } from 'react-hook-form';
@@ -11,12 +12,13 @@ import Button from '@/components/Button';
 import TextField from '@/components/TextField';
 import SelectField from '@/components/SelectField';
 import Snackbar from '@/components/Snackbar';
-import { useCartContext } from '@/contexts/CartContext';
+import { useCartContext } from '@/contexts/EnhancedCartContext';
 import { formatVND } from '@/utils/currency';
-import { OrderService } from '@/services/orderService';
+import { useProduct } from '@/hooks/useProducts';
 import { AddressService, Province, District, Ward } from '@/services/addressService';
 import paymentService from '@/services/paymentService';
-import { Order, PaymentMethod, OrderStatus, PaymentStatus } from '@/types/Order';
+import { PaymentMethod } from '@/types/Order';
+import { useEnhancedCheckout, useValidateCheckout } from '@/hooks/useEnhancedCheckout';
 
 // Validation schema
 const checkoutSchema = z.object({
@@ -41,6 +43,98 @@ const checkoutSchema = z.object({
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
+
+// Component to render individual checkout item with product details
+const CheckoutItemWithDetails = ({ 
+  cartItem 
+}: {
+  cartItem: {
+    productId: number;
+    variationId?: number;
+    quantity: number;
+    unitPrice: number;
+    addedAt: string;
+    selected: boolean;
+  };
+}) => {
+  const { data: product, isLoading } = useProduct(cartItem.productId);
+
+  if (isLoading) {
+    return (
+      <div className="flex gap-3 animate-pulse">
+        <div className="w-16 h-16 flex-shrink-0 bg-[var(--md-sys-color-surface-variant)] rounded-lg"></div>
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-[var(--md-sys-color-surface-variant)] rounded w-3/4"></div>
+          <div className="h-3 bg-[var(--md-sys-color-surface-variant)] rounded w-1/2"></div>
+          <div className="h-3 bg-[var(--md-sys-color-surface-variant)] rounded w-1/4"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="flex gap-3">
+        <div className="w-16 h-16 flex-shrink-0">
+          <div className="w-full h-full rounded-lg flex items-center justify-center bg-[var(--md-sys-color-error-container)]">
+            <span className="text-xs text-[var(--md-sys-color-on-error-container)]">!</span>
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-medium truncate text-[var(--md-sys-color-error)]">
+            Sản phẩm không tồn tại
+          </h4>
+          <span className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
+            Số lượng: {cartItem.quantity}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  const variation = product.variations?.find((v: { id: number; name: string; additionalPrice: number }) => v.id === cartItem.variationId);
+  const displayPrice = variation ? product.basePrice + variation.additionalPrice : product.basePrice;
+
+  return (
+    <div className="flex gap-3">
+      <div className="w-16 h-16 flex-shrink-0">
+        <div className="w-full h-full rounded-lg overflow-hidden bg-[var(--md-sys-color-surface-variant)]">
+          {product.images?.[0] ? (
+            <Image
+              src={product.images[0]}
+              alt={product.name}
+              width={64}
+              height={64}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-xs text-[var(--md-sys-color-on-surface-variant)]">Img</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-medium truncate text-[var(--md-sys-color-on-surface)]">
+          {product.name}
+        </h4>
+        {variation && (
+          <p className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
+            {variation.name}
+          </p>
+        )}
+        <div className="flex justify-between items-center mt-1">
+          <span className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
+            Số lượng: {cartItem.quantity}
+          </span>
+          <span className="text-sm font-medium text-[var(--md-sys-color-primary)]">
+            {formatVND(displayPrice * cartItem.quantity)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface PaymentMethodOption {
   id: string;
@@ -79,9 +173,17 @@ const paymentMethods: PaymentMethodOption[] = [
 const CheckoutPage = () => {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const { cart, isLoading, clearCart } = useCartContext();
-  const orderService = useMemo(() => new OrderService(), []);
+  const { 
+    cart, 
+    isLoading, 
+    getSelectedItems, 
+    getSelectedItemsTotal 
+  } = useCartContext();
   const addressService = useMemo(() => new AddressService(), []);
+
+  // Enhanced checkout hooks
+  const enhancedCheckout = useEnhancedCheckout();
+  const { data: validationResult } = useValidateCheckout();
 
   // Address data
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -236,13 +338,24 @@ const CheckoutPage = () => {
 
   // Form submit handler
   const onSubmit = async (data: CheckoutFormData) => {
-    if (!cart || !cart.items || cart.items.length === 0) {
-      showSnackbar('Giỏ hàng trống!', 'warning');
+    // Check if cart has selected items
+    const selectedItems = getSelectedItems();
+    if (!cart || !selectedItems || selectedItems.length === 0) {
+      showSnackbar('Vui lòng chọn ít nhất một sản phẩm để thanh toán!', 'warning');
       return;
     }
 
     if (!session?.user) {
       showSnackbar('Vui lòng đăng nhập để đặt hàng!', 'warning');
+      return;
+    }
+
+    // Show validation errors if any
+    if (validationResult && !validationResult.valid) {
+      const errorMessages = validationResult.invalidItems.map(item => 
+        `Sản phẩm ID ${item.productId}: ${item.reason}`
+      ).join(', ');
+      showSnackbar(`Có lỗi với các sản phẩm: ${errorMessages}`, 'error');
       return;
     }
 
@@ -264,22 +377,7 @@ const CheckoutPage = () => {
       const selectedPaymentMethodEnum = paymentConfig.method;
       const returnType = paymentConfig.returnType;
 
-      // Convert cart items to order items
-      const orderItems = cart.items.map((item) => ({
-        // Don't set id - let backend auto-generate it
-        productId: item.productId,
-        productName: `Product ${item.productId}`, // TODO: Get actual product name
-        productImage: '', // TODO: Get actual product image
-        quantity: item.quantity,
-        price: item.unitPrice,
-        totalPrice: item.unitPrice * item.quantity
-      }));
-
       // Get user email with proper debugging
-      console.log('Session data:', session);
-      console.log('Session user:', session.user);
-      console.log('Session user email:', session.user?.email);
-      
       const userEmail = session.user?.email;
       if (!userEmail) {
         console.error('No user email found in session:', session);
@@ -287,64 +385,64 @@ const CheckoutPage = () => {
         return;
       }
 
-      const orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'> = {
+      // Prepare checkout request for enhanced checkout service
+      const checkoutRequest = {
+        items: selectedItems.map(item => ({
+          productId: item.productId,
+          variationId: item.variationId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
         userEmail: userEmail,
-        status: OrderStatus.PENDING_PAYMENT,
         address: `${data.address}, ${selectedWard?.name}, ${selectedDistrict?.name}, ${selectedProvince?.name}`,
         phone: data.phone,
         note: data.notes || '',
-        paymentMethod: selectedPaymentMethodEnum,
-        paymentStatus: PaymentStatus.PENDING,
-        paymentId: '',
-        totalPrice: cart.totalPrice,
-        items: orderItems
+        paymentMethod: selectedPaymentMethodEnum.toString(),
       };
 
-      console.log('Creating order with data:', orderData);
+      console.log('Creating order with enhanced checkout:', checkoutRequest);
 
-      // Submit order to backend
-      const createdOrder = await orderService.createOrder(orderData);
-      console.log('Order created successfully:', createdOrder);
+      // Use enhanced checkout service
+      const checkoutResult = await enhancedCheckout.mutateAsync(checkoutRequest);
+      console.log('Order created successfully:', checkoutResult);
 
       // Process payment based on selected method
       if (selectedPaymentMethodEnum === PaymentMethod.VIETTEL_MONEY) {
         // For Viettel Money, initiate payment with specific return type
         const paymentResult = await paymentService.initiateViettelPayment({
-          orderId: createdOrder.id,
+          orderId: checkoutResult.order.id,
           returnType: returnType as 'WEB' | 'QR' | 'DEEPLINK',
-          returnUrl: `${window.location.origin}/checkout/success?orderId=${createdOrder.id}`
+          returnUrl: `${window.location.origin}/checkout/success?orderId=${checkoutResult.order.id}`
         });
 
         if (paymentResult.success) {
-          // Clear cart after successful order creation
-          clearCart();
+          // Cart is already cleared by the enhanced checkout service
 
           // Handle different return types
           if (returnType === 'QR') {
             // Redirect to QR code page
-            router.push(`/checkout/qr?orderId=${createdOrder.id}&qrCode=${encodeURIComponent(paymentResult.qrCode || '')}&message=${encodeURIComponent(paymentResult.message || 'Đang chờ thanh toán...')}`);
+            router.push(`/checkout/qr?orderId=${checkoutResult.order.id}&qrCode=${encodeURIComponent(paymentResult.qrCode || '')}&message=${encodeURIComponent(paymentResult.message || 'Đang chờ thanh toán...')}`);
           } else if (returnType === 'DEEPLINK') {
-            // Clear cart and redirect to app
+            // Redirect to app
             if (paymentResult.paymentUrl) {
               window.location.href = paymentResult.paymentUrl;
             } else {
-              router.push(`/checkout/success?orderId=${createdOrder.id}&message=${encodeURIComponent('Vui lòng mở ứng dụng Viettel Money để hoàn thành thanh toán')}`);
+              router.push(`/checkout/success?orderId=${checkoutResult.order.id}&message=${encodeURIComponent('Vui lòng mở ứng dụng Viettel Money để hoàn thành thanh toán')}`);
             }
           } else {
             // WEB - redirect to payment gateway
             if (paymentResult.paymentUrl) {
               window.location.href = paymentResult.paymentUrl;
             } else {
-              router.push(`/checkout/success?orderId=${createdOrder.id}&message=${encodeURIComponent('Không thể khởi tạo thanh toán. Vui lòng thử lại.')}`);
+              router.push(`/checkout/success?orderId=${checkoutResult.order.id}&message=${encodeURIComponent('Không thể khởi tạo thanh toán. Vui lòng thử lại.')}`);
             }
           }
         } else {
           showSnackbar('Không thể khởi tạo thanh toán. Vui lòng thử lại.', 'error');
         }
       } else {
-        // For COD, just clear cart and redirect to success
-        clearCart();
-        router.push(`/checkout/success?orderId=${createdOrder.id}&message=${encodeURIComponent('Đặt hàng thành công! Bạn sẽ thanh toán khi nhận hàng.')}`);
+        // For COD, redirect to success (cart already cleared by enhanced checkout)
+        router.push(`/checkout/success?orderId=${checkoutResult.order.id}&message=${encodeURIComponent('Đặt hàng thành công! Bạn sẽ thanh toán khi nhận hàng.')}`);
       }
     } catch (error) {
       console.error('Order submission failed:', error);
@@ -383,6 +481,10 @@ const CheckoutPage = () => {
     );
   }
 
+  // Check if cart has selected items for checkout
+  const selectedItems = getSelectedItems();
+  const hasSelectedItems = selectedItems && selectedItems.length > 0;
+
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 min-h-screen bg-[var(--md-sys-color-background)]">
@@ -396,6 +498,35 @@ const CheckoutPage = () => {
             </h2>
             <p className="mb-8 text-[var(--md-sys-color-on-surface-variant)]">
               Bạn cần có sản phẩm trong giỏ hàng để thanh toán.
+            </p>
+            <Link href="/cart">
+              <Button 
+                variant="filled" 
+                className="px-6 py-3 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]"
+              >
+                Quay lại giỏ hàng
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if no items are selected for checkout
+  if (!hasSelectedItems) {
+    return (
+      <div className="container mx-auto px-4 py-8 min-h-screen bg-[var(--md-sys-color-background)]">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="rounded-lg shadow-lg p-12 bg-[var(--md-sys-color-surface-container)]">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center bg-[var(--md-sys-color-surface-variant)]">
+              <span className="mdi text-4xl text-[var(--md-sys-color-on-surface-variant)]">shopping_cart</span>
+            </div>
+            <h2 className="text-2xl font-semibold mb-4 text-[var(--md-sys-color-on-surface)]">
+              Chưa chọn sản phẩm nào
+            </h2>
+            <p className="mb-8 text-[var(--md-sys-color-on-surface-variant)]">
+              Vui lòng quay lại giỏ hàng và chọn ít nhất một sản phẩm để thanh toán.
             </p>
             <Link href="/cart">
               <Button 
@@ -658,40 +789,19 @@ const CheckoutPage = () => {
               
               {/* Order Items */}
               <div className="space-y-4 mb-6 max-h-80 overflow-y-auto">
-                {cart.items?.map((item, index) => (
-                  <div key={`${item.productId}-${item.variationId || 'default'}-${index}`} className="flex gap-3">
-                    <div className="w-16 h-16 flex-shrink-0">
-                      <div className="w-full h-full rounded-lg flex items-center justify-center bg-[var(--md-sys-color-surface-variant)]">
-                        <span className="text-xs text-[var(--md-sys-color-on-surface-variant)]">Img</span>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium truncate text-[var(--md-sys-color-on-surface)]">
-                        Sản phẩm #{item.productId}
-                      </h4>
-                      {item.variationId && (
-                        <p className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
-                          Biến thể: #{item.variationId}
-                        </p>
-                      )}
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
-                          Số lượng: {item.quantity}
-                        </span>
-                        <span className="text-sm font-medium text-[var(--md-sys-color-primary)]">
-                          {formatVND(item.unitPrice * item.quantity)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                {selectedItems.map((item, index) => (
+                  <CheckoutItemWithDetails
+                    key={`${item.productId}-${item.variationId || 'default'}-${index}`}
+                    cartItem={item}
+                  />
                 ))}
               </div>
               
               {/* Order Summary */}
               <div className="border-t pt-4 space-y-3 border-[var(--md-sys-color-outline-variant)]">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Tạm tính ({cart.totalItems} sản phẩm):</span>
-                  <span className="font-medium text-[var(--md-sys-color-on-surface)]">{formatVND(cart.totalPrice)}</span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">Tạm tính ({selectedItems.length} sản phẩm đã chọn):</span>
+                  <span className="font-medium text-[var(--md-sys-color-on-surface)]">{formatVND(getSelectedItemsTotal())}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-[var(--md-sys-color-on-surface-variant)]">Phí vận chuyển:</span>
@@ -704,7 +814,7 @@ const CheckoutPage = () => {
                 <div className="border-t pt-3 border-[var(--md-sys-color-outline-variant)]">
                   <div className="flex justify-between text-lg font-semibold">
                     <span className="text-[var(--md-sys-color-on-surface)]">Tổng cộng:</span>
-                    <span className="text-[var(--md-sys-color-primary)]">{formatVND(cart.totalPrice)}</span>
+                    <span className="text-[var(--md-sys-color-primary)]">{formatVND(getSelectedItemsTotal())}</span>
                   </div>
                 </div>
               </div>

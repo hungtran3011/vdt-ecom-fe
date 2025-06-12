@@ -71,31 +71,31 @@ export const paymentService = {
       size: params?.size || 10
     };
     
-    const response = await api.get('/v1/admin/payments', { params: queryParams });
+    const response = await api.get('/v1/payments', { params: queryParams });
     return response.data;
   },
 
   // Get payment by ID
   async getPaymentById(paymentId: string): Promise<Payment> {
-    const response = await api.get(`/v1/admin/payments/${paymentId}`);
+    const response = await api.get(`/v1/payments/${paymentId}`);
     return response.data;
   },
 
   // Get payments by order ID
   async getPaymentsByOrderId(orderId: string): Promise<Payment[]> {
-    const response = await api.get(`/v1/admin/payments/order/${orderId}`);
+    const response = await api.get(`/v1/payments/order/${orderId}`);
     return response.data;
   },
 
   // Process payment (approve, reject, refund) - Admin only
   async processAdminPayment(data: ProcessPaymentRequest): Promise<Payment> {
-    const response = await api.post(`/v1/admin/payments/${data.paymentId}/process`, data);
+    const response = await api.post(`/v1/payments/${data.paymentId}/process`, data);
     return response.data;
   },
 
   // Create refund
   async createRefund(data: RefundRequest): Promise<Payment> {
-    const response = await api.post(`/v1/admin/payments/${data.paymentId}/refund`, data);
+    const response = await api.post(`/v1/payments/${data.paymentId}/refund`, data);
     return response.data;
   },
 
@@ -105,7 +105,7 @@ export const paymentService = {
     endDate?: string;
     method?: string;
   }): Promise<PaymentSummary> {
-    const response = await api.get('/v1/admin/payments/summary', { params });
+    const response = await api.get('/v1/payments/summary', { params });
     return response.data;
   },
 
@@ -115,7 +115,7 @@ export const paymentService = {
     startDate?: string;
     endDate?: string;
   }): Promise<PaymentAnalytics> {
-    const response = await api.get('/v1/admin/payments/analytics', { params });
+    const response = await api.get('/v1/payments/analytics', { params });
     return response.data;
   },
 
@@ -133,7 +133,7 @@ export const paymentService = {
       amount: number;
     }>;
   }> {
-    const response = await api.post('/v1/admin/payments/reconcile', data);
+    const response = await api.post('/v1/payments/reconcile', data);
     return response.data;
   },
 
@@ -145,7 +145,7 @@ export const paymentService = {
     status?: string;
     method?: string;
   }): Promise<Blob> {
-    const response = await api.get('/v1/admin/payments/export', {
+    const response = await api.get('/v1/payments/export', {
       params,
       responseType: 'blob'
     });
@@ -165,13 +165,13 @@ export const paymentService = {
       ...params
     };
     
-    const response = await api.get('/v1/admin/payments/disputes', { params: queryParams });
+    const response = await api.get('/v1/payments/disputes', { params: queryParams });
     return response.data;
   },
 
   // Handle payment dispute
   async handlePaymentDispute(disputeId: string, action: 'ACCEPT' | 'REJECT', reason?: string) {
-    const response = await api.post(`/v1/admin/payments/disputes/${disputeId}/handle`, {
+    const response = await api.post(`/v1/payments/disputes/${disputeId}/handle`, {
       action,
       reason
     });
@@ -200,7 +200,7 @@ export const paymentService = {
       ...filterParams
     };
     
-    const response = await api.post('/v1/admin/payments/filter/search', queryParams);
+    const response = await api.post('/v1/payments/filter/search', queryParams);
     return response.data;
   },
 

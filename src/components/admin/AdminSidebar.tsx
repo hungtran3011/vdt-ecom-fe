@@ -50,9 +50,6 @@ export default function AdminSidebar() {
   return (
     <nav className="hidden md:block w-64 h-screen bg-(--md-sys-color-surface-container) p-4">
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-(--md-sys-color-on-surface) mb-4">
-          {t('admin.dashboard')}
-        </h2>
         
         <Card className="bg-(--md-sys-color-surface-container-highest)">
           <List>

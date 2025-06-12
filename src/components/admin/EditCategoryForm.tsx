@@ -302,7 +302,7 @@ export default function EditCategoryForm({ category, onCancel, onCategoryUpdated
           <Button
             type="button"
             variant="outlined"
-            label="Cancel"
+            label={t('actions.cancel')}
             onClick={onCancel}
             disabled={updateCategory.isPending}
             className="sm:order-1"
@@ -310,7 +310,7 @@ export default function EditCategoryForm({ category, onCancel, onCategoryUpdated
           <Button
             type="submit"
             variant="filled"
-            label={updateCategory.isPending ? "Updating..." : "Update Category"}
+            label={updateCategory.isPending ? t('common.updating') : t('categories.updateCategory')}
             disabled={updateCategory.isPending || !watchedName?.trim()}
             hasIcon={updateCategory.isPending}
             icon={updateCategory.isPending ? "refresh" : undefined}

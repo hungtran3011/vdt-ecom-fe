@@ -165,6 +165,175 @@ class CartService {
     const response = await apiClient.get<CartItemDto>(`${this.BASE_URL}/${cartId}/items/${itemId}`);
     return response.data;
   }
+
+  // JWT-based Cart Operations (recommended for authenticated users)
+  
+  /**
+   * Get cart for current authenticated user (using JWT)
+   */
+  async getCurrentUserCart(): Promise<CartDto> {
+    const response = await apiClient.get<CartDto>(`${this.BASE_URL}/current`);
+    return response.data;
+  }
+
+  /**
+   * Get or create cart for current authenticated user (using JWT)
+   */
+  async getOrCreateCurrentUserCart(): Promise<CartDto> {
+    const response = await apiClient.post<CartDto>(`${this.BASE_URL}/current`);
+    return response.data;
+  }
+
+  /**
+   * Get cart items for current authenticated user with pagination
+   */
+  async getCurrentUserCartItems(
+    page: number = 0,
+    size: number = 10,
+    cursor?: string
+  ): Promise<CartItemsResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+    });
+    
+    if (cursor) {
+      params.append('cursor', cursor);
+    }
+
+    const response = await apiClient.get<CartItemsResponse>(
+      `${this.BASE_URL}/current/items?${params.toString()}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Add item to cart for current authenticated user
+   */
+  async addItemToCurrentUserCart(request: AddToCartRequest): Promise<CartDto> {
+    const response = await apiClient.post<CartDto>(`${this.BASE_URL}/current/items`, request);
+    return response.data;
+  }
+
+  /**
+   * Update cart item for current authenticated user
+   */
+  async updateCurrentUserCartItem(
+    itemId: number, 
+    request: UpdateCartItemRequest
+  ): Promise<CartDto> {
+    const response = await apiClient.put<CartDto>(
+      `${this.BASE_URL}/current/items/${itemId}`, 
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Remove item from cart for current authenticated user
+   */
+  async removeItemFromCurrentUserCart(itemId: number): Promise<CartDto> {
+    const response = await apiClient.delete<CartDto>(`${this.BASE_URL}/current/items/${itemId}`);
+    return response.data;
+  }
+
+  /**
+   * Clear all items from cart for current authenticated user
+   */
+  async clearCurrentUserCart(): Promise<CartDto> {
+    const response = await apiClient.delete<CartDto>(`${this.BASE_URL}/current/items`);
+    return response.data;
+  }
+
+  // Backward compatibility methods - these route to JWT-based endpoints
+  // Note: userEmail parameter is ignored as JWT token is used instead
+  
+  /**
+   * @deprecated Use getCurrentUserCart() instead
+   * Routes to JWT-based endpoint, userEmail parameter is ignored
+   */
+  async getCartByEmail(userEmail?: string): Promise<CartDto> {
+    if (userEmail) {
+      console.warn('getCartByEmail userEmail parameter is ignored. Using JWT token instead.');
+    }
+    return this.getCurrentUserCart();
+  }
+
+  /**
+   * @deprecated Use getOrCreateCurrentUserCart() instead
+   * Routes to JWT-based endpoint, userEmail parameter is ignored
+   */
+  async getOrCreateCartByEmail(userEmail?: string): Promise<CartDto> {
+    if (userEmail) {
+      console.warn('getOrCreateCartByEmail userEmail parameter is ignored. Using JWT token instead.');
+    }
+    return this.getOrCreateCurrentUserCart();
+  }
+
+  /**
+   * @deprecated Use getCurrentUserCartItems() instead
+   * Routes to JWT-based endpoint, userEmail parameter is ignored
+   */
+  async getCartItemsByEmail(
+    userEmail?: string,
+    page: number = 0,
+    size: number = 10,
+    cursor?: string
+  ): Promise<CartItemsResponse> {
+    if (userEmail) {
+      console.warn('getCartItemsByEmail userEmail parameter is ignored. Using JWT token instead.');
+    }
+    return this.getCurrentUserCartItems(page, size, cursor);
+  }
+
+  /**
+   * @deprecated Use addItemToCurrentUserCart() instead
+   * Routes to JWT-based endpoint, userEmail parameter is ignored
+   */
+  async addItemToCartByEmail(userEmail: string | undefined, request: AddToCartRequest): Promise<CartDto> {
+    if (userEmail) {
+      console.warn('addItemToCartByEmail userEmail parameter is ignored. Using JWT token instead.');
+    }
+    return this.addItemToCurrentUserCart(request);
+  }
+
+  /**
+   * @deprecated Use updateCurrentUserCartItem() instead
+   * Routes to JWT-based endpoint, userEmail parameter is ignored
+   */
+  async updateCartItemByEmail(
+    userEmail: string | undefined, 
+    itemId: number, 
+    request: UpdateCartItemRequest
+  ): Promise<CartDto> {
+    if (userEmail) {
+      console.warn('updateCartItemByEmail userEmail parameter is ignored. Using JWT token instead.');
+    }
+    return this.updateCurrentUserCartItem(itemId, request);
+  }
+
+  /**
+   * @deprecated Use removeItemFromCurrentUserCart() instead
+   * Routes to JWT-based endpoint, userEmail parameter is ignored
+   */
+  async removeItemFromCartByEmail(userEmail: string | undefined, itemId: number): Promise<CartDto> {
+    if (userEmail) {
+      console.warn('removeItemFromCartByEmail userEmail parameter is ignored. Using JWT token instead.');
+    }
+    return this.removeItemFromCurrentUserCart(itemId);
+  }
+
+  /**
+   * @deprecated Use clearCurrentUserCart() instead
+   * Routes to JWT-based endpoint, userEmail parameter is ignored
+   */
+  async clearCartByEmail(userEmail?: string): Promise<CartDto> {
+    if (userEmail) {
+      console.warn('clearCartByEmail userEmail parameter is ignored. Using JWT token instead.');
+    }
+    return this.clearCurrentUserCart();
+  }
+
 }
 
 export const cartService = new CartService();
